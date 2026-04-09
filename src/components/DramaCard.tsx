@@ -24,7 +24,7 @@ export function DramaCard({ drama, onUpdate }: DramaCardProps) {
   };
 
   // Dentro il componente che renderizza la card
-const ProgressPct = (drama.currentEpisode / drama.totalEpisodes) * 100;
+const ProgressPct = (drama.episodesWatched / drama.totalEpisodes) * 100;
 
 return (
   <div className="bg-white rounded-3xl p-4 shadow-sm border border-pink-50">
@@ -33,7 +33,7 @@ return (
     {/* BARRA DI PROGRESSO (Punto 2) */}
     <div className="mt-4">
       <div className="flex justify-between text-xs mb-1 text-gray-500 font-medium">
-        <span>Episodio {drama.currentEpisode}/{drama.totalEpisodes}</span>
+        <span>Episodio {drama.episodesWatched}/{drama.totalEpisodes}</span>
         <span>{Math.round(ProgressPct)}%</span>
       </div>
       <div className="w-full bg-pink-50 h-2 rounded-full overflow-hidden">
