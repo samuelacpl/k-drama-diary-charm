@@ -23,6 +23,36 @@ export function DramaCard({ drama, onUpdate }: DramaCardProps) {
     dropped: "bg-blush text-accent-foreground",
   };
 
+  // Dentro il componente che renderizza la card
+const ProgressPct = (drama.currentEpisode / drama.totalEpisodes) * 100;
+
+return (
+  <div className="bg-white rounded-3xl p-4 shadow-sm border border-pink-50">
+    {/* ... resto del codice del poster ... */}
+
+    {/* BARRA DI PROGRESSO (Punto 2) */}
+    <div className="mt-4">
+      <div className="flex justify-between text-xs mb-1 text-gray-500 font-medium">
+        <span>Episodio {drama.currentEpisode}/{drama.totalEpisodes}</span>
+        <span>{Math.round(ProgressPct)}%</span>
+      </div>
+      <div className="w-full bg-pink-50 h-2 rounded-full overflow-hidden">
+        <div 
+          className="bg-pink-300 h-full rounded-full transition-all duration-500" 
+          style={{ width: `${ProgressPct}%` }}
+        />
+      </div>
+    </div>
+    
+    {/* BADGE DELLO STATO */}
+    <div className="mt-2">
+      <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 bg-pink-100 text-pink-600 rounded-lg">
+        {drama.status}
+      </span>
+    </div>
+  </div>
+);
+
   return (
     <Link
       to={`/drama/${drama.id}`}
