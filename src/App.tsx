@@ -1,30 +1,32 @@
-import { Toaster } from 'sonner';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
-import Index from '@/pages/Index';
-import AddDrama from '@/pages/AddDrama';
-import EditDrama from '@/pages/EditDrama';
-import DramaDetail from '@/pages/DramaDetail';
-import Ranking from '@/pages/Ranking';
-import Stats from '@/pages/Stats';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import Index from "./pages/Index.tsx";
+import AddDrama from "./pages/AddDrama.tsx";
+import DramaDetail from "./pages/DramaDetail.tsx";
+import Ranking from "./pages/Ranking.tsx";
+import NotFound from "./pages/NotFound.tsx";
 
-function App() {
-  return (
-    <BrowserRouter>
-      <Toaster position="top-center" richColors />
-      <div className="min-h-screen bg-background text-foreground">
-        <Navbar />
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/add" element={<AddDrama />} />
-          <Route path="/edit/:id" element={<EditDrama />} />
           <Route path="/drama/:id" element={<DramaDetail />} />
           <Route path="/ranking" element={<Ranking />} />
-          <Route path="/stats" element={<Stats />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
-      </div>
-    </BrowserRouter>
-  );
-}
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

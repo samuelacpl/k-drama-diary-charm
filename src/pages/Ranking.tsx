@@ -1,70 +1,92 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { getDramas } from '@/lib/store';
-import StarRating from '@/components/StarRating';
-import { Trophy } from 'lucide-react';
+import { useState, useMemo } from "react";
+import { getDramas } from "@/lib/store";
+import { Drama } from "@/lib/types";
+import { Navbar } from "@/components/Navbar";
+import { StarRating } from "@/components/StarRating";
+import { Link } from "react-router-dom";
+import { Trophy, Crown, Medal } from "lucide-react";
+
+type Filter = "all" | "completed" | "top";
 
 export default function Ranking() {
-  const [filter, setFilter] = useState<'all' | 'completed' | 'top'>('all');
-  const dramas = getDramas();
+  const [dramas] = useState<Drama[]>(getDramas);
+  const [filter, setFilter] = useState<Filter>("all");
 
   const ranked = useMemo(() => {
-    let list = dramas;
-    if (filter === 'completed') list = list.filter(d => d.status === 'completed');
-    if (filter === 'top') list = list.filter(d => d.rating >= 4);
-    return [...list].sort((a, b) => b.rating - a.rating);
+    let list = [...dramas];
+    if (filter === "completed") list = list.filter((d) => d.status === "completed");
+    if (filter === "top") list = list.filter((d) => d.rating >= 4);
+    return list.sort((a, b) => b.rating - a.rating || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [dramas, filter]);
 
-  const medals = ['🥇', '🥈', '🥉'];
+  const rankIcon = (i: number) => {
+    if (i === 0) return <Crown size={20} className="text-gold" />;
+    if (i === 1) return <Medal size={20} className="text-muted-foreground" />;
+    if (i === 2) return <Medal size={20} className="text-rose" />;
+    return <span className="text-sm font-bold text-muted-foreground w-5 text-center">{i + 1}</span>;
+  };
 
   return (
-    <div className="container max-w-2xl py-6 space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="font-display text-2xl font-bold text-foreground flex items-center justify-center gap-2">
-          <Trophy size={24} className="text-gold" /> Ranking
-        </h1>
-        <p className="text-sm text-muted-foreground">Your top-rated dramas</p>
-      </div>
+    <div className="min-h-screen">
+      <Navbar />
+      <main className="container max-w-2xl py-8 space-y-6">
+        <div className="flex items-center gap-3">
+          <Trophy size={28} className="text-gold" />
+          <h1 className="font-display text-3xl font-semibold">Ranking</h1>
+        </div>
 
-      <div className="flex justify-center gap-2">
-        {(['all', 'completed', 'top'] as const).map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`rounded-xl px-4 py-1.5 text-xs font-semibold transition-colors ${
-              filter === f ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {f === 'all' ? 'All' : f === 'completed' ? 'Completed' : 'Top Rated'}
-          </button>
-        ))}
-      </div>
+        <div className="flex gap-2">
+          {([
+            { value: "all", label: "All" },
+            { value: "completed", label: "Completed" },
+            { value: "top", label: "Top Rated" },
+          ] as { value: Filter; label: string }[]).map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => setFilter(value)}
+              className={`text-xs font-semibold px-4 py-1.5 rounded-full transition-colors ${
+                filter === value
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground hover:bg-accent"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
-      <div className="space-y-3">
-        {ranked.map((drama, i) => (
-          <Link
-            key={drama.id}
-            to={`/drama/${drama.id}`}
-            className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-all hover:shadow-md hover:-translate-y-0.5"
-          >
-            <span className="text-2xl w-8 text-center">{medals[i] ?? `#${i + 1}`}</span>
-            <div className="h-14 w-10 shrink-0 overflow-hidden rounded-lg bg-muted">
-              {drama.coverImage ? (
-                <img src={drama.coverImage} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-lg">🎬</div>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-display text-sm font-bold text-foreground truncate">{drama.title}</h3>
-              <StarRating rating={drama.rating} size={12} />
-            </div>
-          </Link>
-        ))}
-        {ranked.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-10">No dramas to rank yet</p>
+        {ranked.length > 0 ? (
+          <div className="space-y-3">
+            {ranked.map((drama, i) => (
+              <Link
+                key={drama.id}
+                to={`/drama/${drama.id}`}
+                className="glass-card rounded-2xl p-4 flex items-center gap-4 hover:shadow-md transition-all hover:-translate-y-0.5 animate-fade-in"
+                style={{ animationDelay: `${i * 50}ms` }}
+              >
+                <div className="w-8 flex justify-center shrink-0">
+                  {rankIcon(i)}
+                </div>
+                <img
+                  src={drama.coverImage || "/placeholder.svg"}
+                  alt={drama.title}
+                  className="w-12 h-16 object-cover rounded-lg border border-border shrink-0"
+                  loading="lazy"
+                />
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm truncate">{drama.title}</h3>
+                  <StarRating rating={drama.rating} readonly size={12} />
+                </div>
+                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground capitalize shrink-0">
+                  {drama.status}
+                </span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-muted-foreground py-16">No dramas to rank yet 🌸</p>
         )}
-      </div>
+      </main>
     </div>
   );
 }
