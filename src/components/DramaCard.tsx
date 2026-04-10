@@ -11,7 +11,15 @@ interface DramaCardProps {
   onUpdate?: () => void;
 }
 
-export function DramaCard({ drama, onUpdate }: DramaCardProps) {
+export function DramaCard({ drama: rawDrama, onUpdate }: DramaCardProps) {
+  // Safe defaults for legacy data missing new fields
+  const drama = {
+    ...rawDrama,
+    emotionalTags: rawDrama.emotionalTags ?? [],
+    tags: rawDrama.tags ?? [],
+    totalEpisodes: rawDrama.totalEpisodes ?? 0,
+    episodesWatched: rawDrama.episodesWatched ?? 0,
+  };
   const toggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
