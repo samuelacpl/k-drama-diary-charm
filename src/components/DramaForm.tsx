@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Drama, PLATFORMS, GENRE_TAGS, STATUS_OPTIONS } from '@/lib/types';
-import StarRating from './StarRating';
+import { Drama, DramaStatus, PLATFORMS, GENRE_TAGS, STATUS_OPTIONS } from '@/lib/types';
+import { StarRating } from './StarRating';
 import EmotionalBadges from './EmotionalBadges';
 import EpisodeStepper from './EpisodeStepper';
 import { toast } from 'sonner';
 
 interface DramaFormProps {
   initial?: Drama;
-  onSubmit: (data: Omit<Drama, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (data: Omit<Drama, 'id' | 'createdAt'>) => void;
 }
 
 export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
@@ -18,7 +18,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
   const [platform, setPlatform] = useState(initial?.platform ?? '');
   const [totalEpisodes, setTotalEpisodes] = useState(initial?.totalEpisodes ?? 16);
   const [episodesWatched, setEpisodesWatched] = useState(initial?.episodesWatched ?? 0);
-  const [status, setStatus] = useState<Drama['status']>(initial?.status ?? 'plan-to-watch');
+  const [status, setStatus] = useState<DramaStatus>(initial?.status ?? 'plan-to-watch');
   const [coverImage, setCoverImage] = useState(initial?.coverImage ?? '');
   const [actors, setActors] = useState(initial?.actors ?? '');
   const [favoriteQuote, setFavoriteQuote] = useState(initial?.favoriteQuote ?? '');
@@ -32,7 +32,6 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
   const [favoriteSongs, setFavoriteSongs] = useState(initial?.favoriteSongs ?? '');
   const [secondLeadSyndrome, setSecondLeadSyndrome] = useState(initial?.secondLeadSyndrome ?? false);
 
-  // Auto-fill episodes when status changes to completed
   useEffect(() => {
     if (status === 'completed' && totalEpisodes > 0) {
       setEpisodesWatched(totalEpisodes);
@@ -93,7 +92,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
         </div>
       </div>
 
-      {/* Watch Status - ABOVE episodes */}
+      {/* Watch Status */}
       <div className={sectionClass}>
         <h2 className="font-display text-lg font-bold text-foreground">📺 Watch Status</h2>
         <div className="flex flex-wrap gap-2">
@@ -104,7 +103,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
               onClick={() => setStatus(opt.value)}
               className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
                 status === opt.value
-                  ? `bg-${opt.color}/30 border-2 border-${opt.color} text-foreground scale-105`
+                  ? 'bg-primary/20 border-2 border-primary text-foreground scale-105'
                   : 'border-2 border-border bg-card text-muted-foreground hover:border-primary/30'
               }`}
             >
@@ -112,8 +111,6 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
             </button>
           ))}
         </div>
-
-        {/* Episodes Watched - stepper below status */}
         <div className="space-y-2">
           <label className={labelClass}>Episodes Watched</label>
           <EpisodeStepper value={episodesWatched} max={totalEpisodes} onChange={setEpisodesWatched} />

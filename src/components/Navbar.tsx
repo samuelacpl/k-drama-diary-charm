@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { BookHeart, Home, Trophy } from "lucide-react";
+import { BookHeart, Home, Trophy, BarChart3 } from "lucide-react";
 
 export function Navbar() {
   const { pathname } = useLocation();
@@ -7,6 +7,7 @@ export function Navbar() {
   const links = [
     { to: "/", icon: Home, label: "Home" },
     { to: "/ranking", icon: Trophy, label: "Ranking" },
+    { to: "/stats", icon: BarChart3, label: "Stats" },
   ];
 
   return (
@@ -14,9 +15,7 @@ export function Navbar() {
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
           <BookHeart size={24} className="text-primary transition-transform group-hover:scale-110" />
-          <span className="font-display text-xl font-semibold text-foreground">
-            K-Drama Diary
-          </span>
+          <span className="font-display text-xl font-semibold text-foreground">K-Drama Diary</span>
         </Link>
         <div className="flex items-center gap-1">
           {links.map(({ to, icon: Icon, label }) => (

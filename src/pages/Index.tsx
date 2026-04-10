@@ -5,7 +5,6 @@ import { getDramas } from "@/lib/store";
 import { Drama } from "@/lib/types";
 import { DramaCard } from "@/components/DramaCard";
 import { Navbar } from "@/components/Navbar";
-import heroBg from "@/assets/hero-bg.jpg";
 
 type SortOption = "rating" | "date" | "favorites";
 
@@ -41,9 +40,7 @@ export default function Index() {
 
       {/* Hero */}
       {dramas.length === 0 && (
-        <div className="relative h-72 sm:h-96 overflow-hidden">
-          <img src={heroBg} alt="K-Drama aesthetic" className="w-full h-full object-cover" width={1920} height={1080} />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+        <div className="relative h-72 sm:h-80 overflow-hidden bg-gradient-to-br from-blush via-lavender to-cream">
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
             <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground mb-3">
               Your K-Drama Diary
@@ -57,7 +54,6 @@ export default function Index() {
 
       {/* Main */}
       <main className="container py-8 space-y-6">
-        {/* Search & Sort */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -87,7 +83,6 @@ export default function Index() {
           </div>
         </div>
 
-        {/* Grid */}
         {filtered.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
             {filtered.map((drama) => (
@@ -100,10 +95,7 @@ export default function Index() {
               {search ? "No dramas found ✨" : "Start adding your favorite dramas!"}
             </p>
             {!search && (
-              <Link
-                to="/add"
-                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-full font-semibold hover:opacity-90 transition"
-              >
+              <Link to="/add" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-full font-semibold hover:opacity-90 transition">
                 <Plus size={18} />
                 Add Your First Drama
               </Link>
@@ -112,11 +104,7 @@ export default function Index() {
         )}
       </main>
 
-      {/* FAB */}
-      <Link
-        to="/add"
-        className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105 animate-float"
-      >
+      <Link to="/add" className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105 animate-float">
         <Plus size={24} />
       </Link>
     </div>
