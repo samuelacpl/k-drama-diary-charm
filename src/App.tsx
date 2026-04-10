@@ -8,6 +8,7 @@ import AddDrama from "./pages/AddDrama";
 import DramaDetail from "./pages/DramaDetail";
 import EditDrama from "./pages/EditDrama";
 import Ranking from "./pages/Ranking";
+import Gallery from "./pages/Gallery";
 import Stats from "./pages/Stats";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/drama/:id" element={<DramaDetail />} />
           <Route path="/drama/:id/edit" element={<EditDrama />} />
           <Route path="/ranking" element={<Ranking />} />
+          <Route path="/gallery" element={<Gallery />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
