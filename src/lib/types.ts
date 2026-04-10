@@ -1,5 +1,11 @@
 export type DramaStatus = 'watching' | 'completed' | 'dropped' | 'plan-to-watch';
 
+export interface WatchingImage {
+  id: string;
+  dataUrl: string;
+  comment: string;
+}
+
 export interface Drama {
   id: string;
   title: string;
@@ -21,6 +27,9 @@ export interface Drama {
   secondLeadSyndrome: boolean;
   isFavorite: boolean;
   createdAt: string;
+  watchingImages: WatchingImage[];
+  watchedWithGlassimo: boolean;
+  glassimoReview: string;
 }
 
 export const PLATFORMS = ['Netflix', 'Viki', 'Disney+', 'TVING', 'Wavve', 'WeTV', 'iQIYI', 'Other'];
