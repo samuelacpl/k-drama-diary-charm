@@ -1,7 +1,8 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Heart, Trash2 } from "lucide-react";
+import { ArrowLeft, Heart, Trash2, Edit } from "lucide-react";
 import { getDrama, saveDrama, deleteDrama } from "@/lib/store";
 import { StarRating } from "@/components/StarRating";
+import EmotionalBadges from "@/components/EmotionalBadges";
 import { Navbar } from "@/components/Navbar";
 import { useState } from "react";
 import { Drama } from "@/lib/types";
@@ -36,19 +37,24 @@ export default function DramaDetail() {
     }
   };
 
-  const Section = ({ title, content }: { title: string; content: string }) =>
+  const statusLabel: Record<string, string> = {
+    watching: "📺 Watching",
+    completed: "✅ Completed",
+    dropped: "❌ Dropped",
+    "plan-to-watch": "📌 Plan to Watch",
+  };
+
+  const progressPct = drama.totalEpisodes > 0
+    ? Math.round((drama.episodesWatched / drama.totalEpisodes) * 100)
+    : 0;
+
+  const Section = ({ title, content }: { title: string; content?: string }) =>
     content ? (
       <div className="glass-card rounded-2xl p-6 space-y-2 animate-fade-in">
         <h3 className="font-display text-lg font-semibold">{title}</h3>
         <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{content}</p>
       </div>
     ) : null;
-
-  const statusLabel: Record<string, string> = {
-    watching: "📺 Watching",
-    completed: "✅ Completed",
-    dropped: "❌ Dropped",
-  };
 
   return (
     <div className="min-h-screen">
@@ -60,6 +66,9 @@ export default function DramaDetail() {
             <span className="text-sm font-medium">Back</span>
           </button>
           <div className="flex gap-2">
+            <Link to={`/drama/${drama.id}/edit`} className="p-2 rounded-full hover:bg-secondary transition-colors text-muted-foreground">
+              <Edit size={20} />
+            </Link>
             <button onClick={toggleFavorite} className="p-2 rounded-full hover:bg-secondary transition-colors">
               <Heart size={20} className={drama.isFavorite ? "fill-rose text-rose" : "text-muted-foreground"} />
             </button>
@@ -81,6 +90,11 @@ export default function DramaDetail() {
           <div className="space-y-3 flex-1">
             <h1 className="font-display text-3xl sm:text-4xl font-semibold">{drama.title}</h1>
             <StarRating rating={drama.rating} readonly size={22} />
+
+            {drama.emotionalTags.length > 0 && (
+              <EmotionalBadges selected={drama.emotionalTags} size="md" />
+            )}
+
             <div className="flex flex-wrap gap-2 text-xs font-medium">
               <span className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground">
                 {statusLabel[drama.status]}
@@ -88,13 +102,23 @@ export default function DramaDetail() {
               {drama.platform && (
                 <span className="px-3 py-1 rounded-full bg-lavender text-accent-foreground">{drama.platform}</span>
               )}
-              {drama.episodes > 0 && (
-                <span className="px-3 py-1 rounded-full bg-blush text-accent-foreground">{drama.episodes} episodes</span>
-              )}
             </div>
-            {drama.actors.length > 0 && (
+
+            {drama.totalEpisodes > 0 && (
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground font-medium">
+                  <span>Ep. {drama.episodesWatched}/{drama.totalEpisodes}</span>
+                  <span>{progressPct}%</span>
+                </div>
+                <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+                  <div className="bg-primary h-full rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
+                </div>
+              </div>
+            )}
+
+            {drama.actors && (
               <p className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">Cast:</span> {drama.actors.join(", ")}
+                <span className="font-semibold text-foreground">Cast:</span> {drama.actors}
               </p>
             )}
             {drama.tags.length > 0 && (
@@ -112,10 +136,27 @@ export default function DramaDetail() {
         {/* Sections */}
         <div className="space-y-4">
           <Section title="📖 Plot" content={drama.plot} />
-          <Section title="💬 Favorite Quote" content={drama.favoriteQuote} />
+          {drama.favoriteQuote && (
+            <div className="glass-card rounded-2xl p-6 space-y-2 animate-fade-in">
+              <h3 className="font-display text-lg font-semibold">💬 Favorite Quote</h3>
+              <blockquote className="text-sm italic text-muted-foreground border-l-4 border-primary/30 pl-4">
+                "{drama.favoriteQuote}"
+              </blockquote>
+            </div>
+          )}
           <Section title="💗 What I Loved" content={drama.whatILiked} />
           <Section title="✍️ My Review" content={drama.review} />
         </div>
+
+        {/* Fan Corner */}
+        {(drama.favoriteCharacters || drama.favoriteSongs || drama.secondLeadSyndrome) && (
+          <div className="glass-card rounded-2xl p-6 space-y-3 animate-fade-in">
+            <h3 className="font-display text-lg font-semibold">🧸 Fan Corner</h3>
+            {drama.favoriteCharacters && <p className="text-sm"><span className="font-semibold">Favorite Characters:</span> {drama.favoriteCharacters}</p>}
+            {drama.favoriteSongs && <p className="text-sm"><span className="font-semibold">🎵 OST:</span> {drama.favoriteSongs}</p>}
+            {drama.secondLeadSyndrome && <p className="text-sm">💔 Had Second Lead Syndrome 😭</p>}
+          </div>
+        )}
 
         <p className="text-xs text-muted-foreground text-center pt-4">
           Added on {new Date(drama.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
