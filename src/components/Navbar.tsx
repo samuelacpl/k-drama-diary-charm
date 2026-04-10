@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { BookHeart, Home, Trophy, BarChart3 } from "lucide-react";
+import { BookHeart, Home, Trophy, BarChart3, Image } from "lucide-react";
 
 export function Navbar() {
   const { pathname } = useLocation();
@@ -7,6 +7,7 @@ export function Navbar() {
   const links = [
     { to: "/", icon: Home, label: "Home" },
     { to: "/ranking", icon: Trophy, label: "Ranking" },
+    { to: "/gallery", icon: Image, label: "Gallery" },
     { to: "/stats", icon: BarChart3, label: "Stats" },
   ];
 

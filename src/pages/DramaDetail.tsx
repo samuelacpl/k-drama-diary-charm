@@ -44,8 +44,12 @@ export default function DramaDetail() {
     "plan-to-watch": "📌 Plan to Watch",
   };
 
-  const progressPct = drama.totalEpisodes > 0
-    ? Math.round((drama.episodesWatched / drama.totalEpisodes) * 100)
+  const tags = drama.tags ?? [];
+  const emotionalTags = drama.emotionalTags ?? [];
+  const watchingImages = drama.watchingImages ?? [];
+
+  const progressPct = (drama.totalEpisodes ?? 0) > 0
+    ? Math.round(((drama.episodesWatched ?? 0) / drama.totalEpisodes) * 100)
     : 0;
 
   const Section = ({ title, content }: { title: string; content?: string }) =>
@@ -91,8 +95,8 @@ export default function DramaDetail() {
             <h1 className="font-display text-3xl sm:text-4xl font-semibold">{drama.title}</h1>
             <StarRating rating={drama.rating} readonly size={22} />
 
-            {drama.emotionalTags.length > 0 && (
-              <EmotionalBadges selected={drama.emotionalTags} size="md" />
+            {emotionalTags.length > 0 && (
+              <EmotionalBadges selected={emotionalTags} size="md" />
             )}
 
             <div className="flex flex-wrap gap-2 text-xs font-medium">
@@ -102,12 +106,15 @@ export default function DramaDetail() {
               {drama.platform && (
                 <span className="px-3 py-1 rounded-full bg-lavender text-accent-foreground">{drama.platform}</span>
               )}
+              {drama.watchedWithGlassimo && (
+                <span className="px-3 py-1 rounded-full bg-gold/20 text-foreground">🥂 With Glassimo</span>
+              )}
             </div>
 
-            {drama.totalEpisodes > 0 && (
+            {(drama.totalEpisodes ?? 0) > 0 && (
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground font-medium">
-                  <span>Ep. {drama.episodesWatched}/{drama.totalEpisodes}</span>
+                  <span>Ep. {drama.episodesWatched ?? 0}/{drama.totalEpisodes}</span>
                   <span>{progressPct}%</span>
                 </div>
                 <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
@@ -121,9 +128,9 @@ export default function DramaDetail() {
                 <span className="font-semibold text-foreground">Cast:</span> {drama.actors}
               </p>
             )}
-            {drama.tags.length > 0 && (
+            {tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
-                {drama.tags.map((tag) => (
+                {tags.map((tag) => (
                   <span key={tag} className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-accent text-accent-foreground">
                     #{tag}
                   </span>
@@ -146,7 +153,27 @@ export default function DramaDetail() {
           )}
           <Section title="💗 What I Loved" content={drama.whatILiked} />
           <Section title="✍️ My Review" content={drama.review} />
+          {drama.watchedWithGlassimo && drama.glassimoReview && (
+            <Section title="🥂 Glassimo Review" content={drama.glassimoReview} />
+          )}
         </div>
+
+        {/* Watching It Images */}
+        {watchingImages.length > 0 && (
+          <div className="glass-card rounded-2xl p-6 space-y-3 animate-fade-in">
+            <h3 className="font-display text-lg font-semibold">📸 Watching It</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {watchingImages.map(img => (
+                <div key={img.id} className="rounded-xl overflow-hidden border border-border">
+                  <img src={img.dataUrl} alt={img.comment || ''} className="w-full aspect-square object-cover" />
+                  {img.comment && (
+                    <p className="p-2 text-xs text-muted-foreground">{img.comment}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Fan Corner */}
         {(drama.favoriteCharacters || drama.favoriteSongs || drama.secondLeadSyndrome) && (

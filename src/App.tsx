@@ -8,6 +8,7 @@ import AddDrama from "./pages/AddDrama";
 import DramaDetail from "./pages/DramaDetail";
 import EditDrama from "./pages/EditDrama";
 import Ranking from "./pages/Ranking";
+import Gallery from "./pages/Gallery";
 import Stats from "./pages/Stats";
 import NotFound from "./pages/NotFound";
 
