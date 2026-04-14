@@ -9,7 +9,9 @@ import DramaDetail from "./pages/DramaDetail";
 import EditDrama from "./pages/EditDrama";
 import Ranking from "./pages/Ranking";
 import Gallery from "./pages/Gallery";
+import Quotes from "./pages/Quotes";
 import Stats from "./pages/Stats";
+import Actors from "./pages/Actors";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,7 +29,9 @@ const App = () => (
           <Route path="/drama/:id/edit" element={<EditDrama />} />
           <Route path="/ranking" element={<Ranking />} />
           <Route path="/gallery" element={<Gallery />} />
+          <Route path="/quotes" element={<Quotes />} />
           <Route path="/stats" element={<Stats />} />
+          <Route path="/actors" element={<Actors />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

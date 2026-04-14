@@ -4,6 +4,8 @@ import { getDrama, saveDrama, deleteDrama } from "@/lib/store";
 import { StarRating } from "@/components/StarRating";
 import EmotionalBadges from "@/components/EmotionalBadges";
 import { Navbar } from "@/components/Navbar";
+import QuotesSlider from "@/components/QuotesSlider";
+import ActorCard from "@/components/ActorCard";
 import { useState } from "react";
 import { Drama } from "@/lib/types";
 
@@ -37,6 +39,15 @@ export default function DramaDetail() {
     }
   };
 
+  const handleActorReact = (actorId: number, reaction: 'loved' | 'hated') => {
+    const updatedCast = (drama.cast ?? []).map(a =>
+      a.id === actorId ? { ...a, reaction: a.reaction === reaction ? undefined : reaction } : a
+    );
+    const updated = { ...drama, cast: updatedCast };
+    saveDrama(updated);
+    setDrama(updated);
+  };
+
   const statusLabel: Record<string, string> = {
     watching: "📺 Watching",
     completed: "✅ Completed",
@@ -47,6 +58,8 @@ export default function DramaDetail() {
   const tags = drama.tags ?? [];
   const emotionalTags = drama.emotionalTags ?? [];
   const watchingImages = drama.watchingImages ?? [];
+  const cast = drama.cast ?? [];
+  const quotes = drama.favoriteQuotes?.length ? drama.favoriteQuotes : (drama.favoriteQuote ? [drama.favoriteQuote] : []);
 
   const progressPct = (drama.totalEpisodes ?? 0) > 0
     ? Math.round(((drama.episodesWatched ?? 0) / drama.totalEpisodes) * 100)
@@ -140,17 +153,29 @@ export default function DramaDetail() {
           </div>
         </div>
 
+        {/* Cast Section */}
+        {cast.length > 0 && (
+          <div className="glass-card rounded-2xl p-6 space-y-4 animate-fade-in">
+            <h3 className="font-display text-lg font-semibold">🎭 Cast</h3>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
+              {cast.map(actor => (
+                <ActorCard
+                  key={actor.id}
+                  actor={actor}
+                  onReact={(reaction) => handleActorReact(actor.id, reaction)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Sections */}
         <div className="space-y-4">
           <Section title="📖 Plot" content={drama.plot} />
-          {drama.favoriteQuote && (
-            <div className="glass-card rounded-2xl p-6 space-y-2 animate-fade-in">
-              <h3 className="font-display text-lg font-semibold">💬 Favorite Quote</h3>
-              <blockquote className="text-sm italic text-muted-foreground border-l-4 border-primary/30 pl-4">
-                "{drama.favoriteQuote}"
-              </blockquote>
-            </div>
-          )}
+
+          {/* Quotes Slider */}
+          {quotes.length > 0 && <QuotesSlider quotes={quotes} />}
+
           <Section title="💗 What I Loved" content={drama.whatILiked} />
           <Section title="✍️ My Review" content={drama.review} />
           {drama.watchedWithGlassimo && drama.glassimoReview && (
