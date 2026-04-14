@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Drama, DramaStatus, WatchingImage, PLATFORMS, GENRE_TAGS, STATUS_OPTIONS } from '@/lib/types';
+import { Drama, DramaStatus, WatchingImage, ActorInfo, PLATFORMS, GENRE_TAGS, STATUS_OPTIONS } from '@/lib/types';
+import { searchDramas, getDramaDetails, getDramaCast, posterUrl, profileUrl, hasTmdbKey, TmdbSearchResult } from '@/lib/tmdb';
 import { StarRating } from './StarRating';
 import EmotionalBadges from './EmotionalBadges';
 import EpisodeStepper from './EpisodeStepper';
 import { toast } from 'sonner';
-import { Upload, X, Plus, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Plus, Search } from 'lucide-react';
 
 interface DramaFormProps {
   initial?: Drama;
@@ -33,7 +34,9 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
   const [status, setStatus] = useState<DramaStatus>(initial?.status ?? 'plan-to-watch');
   const [coverImage, setCoverImage] = useState(initial?.coverImage ?? '');
   const [actors, setActors] = useState(initial?.actors ?? '');
-  const [favoriteQuote, setFavoriteQuote] = useState(initial?.favoriteQuote ?? '');
+  const [favoriteQuotes, setFavoriteQuotes] = useState<string[]>(
+    initial?.favoriteQuotes?.length ? initial.favoriteQuotes : (initial?.favoriteQuote ? [initial.favoriteQuote] : [''])
+  );
   const [plot, setPlot] = useState(initial?.plot ?? '');
   const [whatILiked, setWhatILiked] = useState(initial?.whatILiked ?? '');
   const [review, setReview] = useState(initial?.review ?? '');
@@ -46,12 +49,69 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
   const [watchingImages, setWatchingImages] = useState<WatchingImage[]>(initial?.watchingImages ?? []);
   const [watchedWithGlassimo, setWatchedWithGlassimo] = useState(initial?.watchedWithGlassimo ?? false);
   const [glassimoReview, setGlassimoReview] = useState(initial?.glassimoReview ?? '');
+  const [tmdbId, setTmdbId] = useState<number | undefined>(initial?.tmdbId);
+  const [cast, setCast] = useState<ActorInfo[]>(initial?.cast ?? []);
+
+  // TMDb search state
+  const [tmdbQuery, setTmdbQuery] = useState('');
+  const [tmdbResults, setTmdbResults] = useState<TmdbSearchResult[]>([]);
+  const [showTmdb, setShowTmdb] = useState(false);
+  const [loadingTmdb, setLoadingTmdb] = useState(false);
+  const tmdbTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     if (status === 'completed' && totalEpisodes > 0) {
       setEpisodesWatched(totalEpisodes);
     }
   }, [status, totalEpisodes]);
+
+  // Debounced TMDb search
+  const handleTmdbSearch = useCallback((query: string) => {
+    setTmdbQuery(query);
+    if (tmdbTimerRef.current) clearTimeout(tmdbTimerRef.current);
+    if (!query.trim()) { setTmdbResults([]); return; }
+    tmdbTimerRef.current = setTimeout(async () => {
+      setLoadingTmdb(true);
+      const results = await searchDramas(query);
+      setTmdbResults(results);
+      setLoadingTmdb(false);
+    }, 400);
+  }, []);
+
+  const selectTmdbDrama = async (result: TmdbSearchResult) => {
+    setShowTmdb(false);
+    setTmdbQuery('');
+    setTmdbResults([]);
+    setTitle(result.name);
+    setTmdbId(result.id);
+    if (result.poster_path) setCoverImage(posterUrl(result.poster_path, 'w500'));
+
+    const detail = await getDramaDetails(result.id);
+    if (detail) {
+      setTotalEpisodes(detail.number_of_episodes || 16);
+      if (detail.overview && !plot) setPlot(detail.overview);
+      const mappedGenres = detail.genres.map(g => {
+        const genreMap: Record<string, string> = {
+          'Drama': 'Melodrama', 'Action & Adventure': 'Action', 'Sci-Fi & Fantasy': 'Fantasy',
+          'Comedy': 'Comedy', 'Crime': 'Thriller', 'Mystery': 'Thriller', 'War & Politics': 'Historical',
+          'Family': 'Slice of Life', 'Romance': 'Romance',
+        };
+        return genreMap[g.name] || g.name;
+      }).filter(g => GENRE_TAGS.includes(g));
+      if (mappedGenres.length) setTags(prev => [...new Set([...prev, ...mappedGenres])]);
+    }
+
+    const castData = await getDramaCast(result.id);
+    if (castData.length) {
+      const mapped: ActorInfo[] = castData.slice(0, 6).map(c => ({
+        id: c.id, name: c.name, character: c.character,
+        profilePath: c.profile_path || '',
+      }));
+      setCast(mapped);
+      setActors(mapped.map(a => a.name).join(', '));
+    }
+    toast.success('Drama info loaded from TMDb! ✨');
+  };
 
   const toggleTag = (tag: string) => {
     setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
@@ -60,10 +120,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image too large (max 5MB)');
-      return;
-    }
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image too large (max 5MB)'); return; }
     const dataUrl = await fileToDataUrl(file);
     setCoverImage(dataUrl);
   };
@@ -72,36 +129,34 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
     const files = e.target.files;
     if (!files) return;
     for (const file of Array.from(files)) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`${file.name} is too large (max 5MB)`);
-        continue;
-      }
+      if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name} is too large (max 5MB)`); continue; }
       const dataUrl = await fileToDataUrl(file);
       setWatchingImages(prev => [...prev, { id: crypto.randomUUID(), dataUrl, comment: '' }]);
     }
     e.target.value = '';
   };
 
-  const removeWatchingImage = (id: string) => {
-    setWatchingImages(prev => prev.filter(img => img.id !== id));
-  };
-
-  const updateWatchingImageComment = (id: string, comment: string) => {
+  const removeWatchingImage = (id: string) => setWatchingImages(prev => prev.filter(img => img.id !== id));
+  const updateWatchingImageComment = (id: string, comment: string) =>
     setWatchingImages(prev => prev.map(img => img.id === id ? { ...img, comment } : img));
-  };
+
+  const addQuote = () => setFavoriteQuotes(prev => [...prev, '']);
+  const removeQuote = (idx: number) => setFavoriteQuotes(prev => prev.filter((_, i) => i !== idx));
+  const updateQuote = (idx: number, val: string) =>
+    setFavoriteQuotes(prev => prev.map((q, i) => i === idx ? val : q));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) {
-      toast.error('Please enter a title');
-      return;
-    }
+    if (!title.trim()) { toast.error('Please enter a title'); return; }
+    const cleanedQuotes = favoriteQuotes.filter(q => q.trim());
     onSubmit({
       title, platform, totalEpisodes, episodesWatched, status, coverImage,
-      actors, favoriteQuote, plot, whatILiked, review, rating, tags, emotionalTags,
+      actors, favoriteQuote: cleanedQuotes[0] || '', favoriteQuotes: cleanedQuotes,
+      plot, whatILiked, review, rating, tags, emotionalTags,
       favoriteCharacters, favoriteSongs, secondLeadSyndrome,
       isFavorite: initial?.isFavorite ?? false,
       watchingImages, watchedWithGlassimo, glassimoReview,
+      tmdbId, cast,
     });
   };
 
@@ -111,6 +166,40 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="mx-auto max-w-2xl space-y-6 pb-10">
+      {/* TMDb Search */}
+      {hasTmdbKey() && (
+        <div className={sectionClass}>
+          <h2 className="font-display text-lg font-bold text-foreground">🔍 Search TMDb</h2>
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={tmdbQuery}
+              onChange={e => { handleTmdbSearch(e.target.value); setShowTmdb(true); }}
+              onFocus={() => tmdbResults.length && setShowTmdb(true)}
+              placeholder="Search for a K-Drama..."
+              className={`${inputClass} pl-9`}
+            />
+            {showTmdb && (tmdbResults.length > 0 || loadingTmdb) && (
+              <div className="absolute z-20 mt-1 w-full rounded-xl border border-border bg-card shadow-lg max-h-72 overflow-y-auto">
+                {loadingTmdb ? (
+                  <p className="p-4 text-sm text-muted-foreground text-center">Searching...</p>
+                ) : tmdbResults.map(r => (
+                  <button key={r.id} type="button" onClick={() => selectTmdbDrama(r)}
+                    className="w-full flex items-center gap-3 p-3 hover:bg-secondary/50 transition-colors text-left">
+                    <img src={posterUrl(r.poster_path, 'w92')} alt="" className="w-10 h-14 object-cover rounded-lg border border-border bg-muted" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{r.name}</p>
+                      <p className="text-xs text-muted-foreground">{r.first_air_date?.slice(0, 4) || 'N/A'}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">Search to auto-fill title, poster, episodes, cast & genres</p>
+        </div>
+      )}
+
       {/* Basic Info */}
       <div className={sectionClass}>
         <h2 className="font-display text-lg font-bold text-foreground">📝 Basic Info</h2>
@@ -156,6 +245,27 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
           <input value={actors} onChange={e => setActors(e.target.value)} placeholder="Actor names..." className={inputClass} />
         </div>
       </div>
+
+      {/* Cast from TMDb */}
+      {cast.length > 0 && (
+        <div className={sectionClass}>
+          <h2 className="font-display text-lg font-bold text-foreground">🎭 Cast</h2>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+            {cast.map(actor => {
+              const imgSrc = actor.profilePath?.startsWith('http') ? actor.profilePath : profileUrl(actor.profilePath);
+              return (
+                <div key={actor.id} className="text-center space-y-1">
+                  <div className="w-14 h-14 mx-auto rounded-full overflow-hidden border-2 border-border bg-muted">
+                    {imgSrc ? <img src={imgSrc} alt={actor.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-lg">🎭</div>}
+                  </div>
+                  <p className="text-[10px] font-semibold text-foreground line-clamp-1">{actor.name}</p>
+                  <p className="text-[9px] text-muted-foreground line-clamp-1">{actor.character}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Watch Status */}
       <div className={sectionClass}>
@@ -218,10 +328,26 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
           <label className={labelClass}>Plot / Summary</label>
           <textarea value={plot} onChange={e => setPlot(e.target.value)} rows={3} placeholder="What's it about..." className={inputClass} />
         </div>
-        <div className="space-y-1">
-          <label className={labelClass}>💬 Favorite Quote</label>
-          <textarea value={favoriteQuote} onChange={e => setFavoriteQuote(e.target.value)} rows={2} placeholder="That one line..." className={`${inputClass} italic`} />
+
+        {/* Multiple Favorite Quotes */}
+        <div className="space-y-2">
+          <label className={labelClass}>💬 Favorite Quotes</label>
+          {favoriteQuotes.map((q, i) => (
+            <div key={i} className="flex gap-2">
+              <textarea value={q} onChange={e => updateQuote(i, e.target.value)} rows={2} placeholder="That one line..."
+                className={`${inputClass} italic flex-1`} />
+              {favoriteQuotes.length > 1 && (
+                <button type="button" onClick={() => removeQuote(i)} className="p-2 text-destructive hover:bg-destructive/10 rounded-xl transition-colors self-start">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addQuote} className="flex items-center gap-1 text-xs text-primary font-semibold hover:underline">
+            <Plus size={14} /> Add quote
+          </button>
         </div>
+
         <div className="space-y-1">
           <label className={labelClass}>What I Loved</label>
           <textarea value={whatILiked} onChange={e => setWhatILiked(e.target.value)} rows={2} placeholder="The best parts..." className={inputClass} />
@@ -246,12 +372,8 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
                 <X size={14} className="text-destructive" />
               </button>
               <div className="p-2">
-                <input
-                  value={img.comment}
-                  onChange={e => updateWatchingImageComment(img.id, e.target.value)}
-                  placeholder="Add a comment..."
-                  className="w-full text-xs bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground"
-                />
+                <input value={img.comment} onChange={e => updateWatchingImageComment(img.id, e.target.value)}
+                  placeholder="Add a comment..." className="w-full text-xs bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground" />
               </div>
             </div>
           ))}
