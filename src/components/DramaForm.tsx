@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Drama, DramaStatus, WatchingImage, ActorInfo, PLATFORMS, GENRE_TAGS, STATUS_OPTIONS } from '@/lib/types';
 import { searchDramas, getDramaDetails, getDramaCast, posterUrl, profileUrl, hasTmdbKey, TmdbSearchResult } from '@/lib/tmdb';
@@ -246,25 +247,11 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
         </div>
       </div>
 
-      {/* Cast from TMDb */}
+      {/* Cast from TMDb – Carousel with reactions */}
       {cast.length > 0 && (
-        <div className={sectionClass}>
-          <h2 className="font-display text-lg font-bold text-foreground">🎭 Cast</h2>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-            {cast.map(actor => {
-              const imgSrc = actor.profilePath?.startsWith('http') ? actor.profilePath : profileUrl(actor.profilePath);
-              return (
-                <div key={actor.id} className="text-center space-y-1">
-                  <div className="w-14 h-14 mx-auto rounded-full overflow-hidden border-2 border-border bg-muted">
-                    {imgSrc ? <img src={imgSrc} alt={actor.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-lg">🎭</div>}
-                  </div>
-                  <p className="text-[10px] font-semibold text-foreground line-clamp-1">{actor.name}</p>
-                  <p className="text-[9px] text-muted-foreground line-clamp-1">{actor.character}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <CastFormCarousel cast={cast} onReact={(actorId, reaction) => {
+          setCast(prev => prev.map(a => a.id === actorId ? { ...a, reaction: a.reaction === reaction ? undefined : reaction } : a));
+        }} />
       )}
 
       {/* Watch Status */}
