@@ -14,6 +14,54 @@ interface DramaFormProps {
   onSubmit: (data: Omit<Drama, 'id' | 'createdAt'>) => void;
 }
 
+function CastFormCarousel({ cast, onReact }: { cast: ActorInfo[]; onReact: (actorId: number, reaction: 'loved' | 'hated') => void }) {
+  const [offset, setOffset] = useState(0);
+  const visible = 6;
+  const maxOffset = Math.max(0, cast.length - visible);
+
+  return (
+    <div className="space-y-4 rounded-2xl border border-border bg-card/50 p-5">
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-lg font-bold text-foreground">🎭 Fan Corner – Cast</h2>
+        {cast.length > visible && (
+          <div className="flex gap-1">
+            <button type="button" onClick={() => setOffset(o => Math.max(0, o - 1))} disabled={offset === 0}
+              className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30">
+              <ChevronLeft size={16} />
+            </button>
+            <button type="button" onClick={() => setOffset(o => Math.min(maxOffset, o + 1))} disabled={offset >= maxOffset}
+              className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30">
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="overflow-hidden">
+        <div className="flex gap-3 transition-transform duration-300" style={{ transform: `translateX(-${offset * (74 + 12)}px)` }}>
+          {cast.map(actor => {
+            const imgSrc = actor.profilePath?.startsWith('http') ? actor.profilePath : profileUrl(actor.profilePath);
+            return (
+              <div key={actor.id} className="shrink-0 text-center space-y-1" style={{ width: 74 }}>
+                <div className="w-14 h-14 mx-auto rounded-full overflow-hidden border-2 border-border bg-muted">
+                  {imgSrc ? <img src={imgSrc} alt={actor.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-lg">🎭</div>}
+                </div>
+                <p className="text-[10px] font-semibold text-foreground line-clamp-1">{actor.name}</p>
+                <p className="text-[9px] text-muted-foreground line-clamp-1">{actor.character}</p>
+                <div className="flex justify-center gap-1">
+                  <button type="button" onClick={() => onReact(actor.id, 'loved')}
+                    className={`text-xs px-1.5 py-0.5 rounded-full transition-all ${actor.reaction === 'loved' ? 'bg-rose/20 scale-110' : 'hover:bg-secondary'}`}>❤️</button>
+                  <button type="button" onClick={() => onReact(actor.id, 'hated')}
+                    className={`text-xs px-1.5 py-0.5 rounded-full transition-all ${actor.reaction === 'hated' ? 'bg-muted scale-110' : 'hover:bg-secondary'}`}>💀</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
