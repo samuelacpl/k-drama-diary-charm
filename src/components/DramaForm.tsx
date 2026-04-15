@@ -20,7 +20,7 @@ function CastFormCarousel({ cast, onReact }: { cast: ActorInfo[]; onReact: (acto
   const maxOffset = Math.max(0, cast.length - visible);
 
   return (
-    <div className="space-y-4 rounded-2xl border border-border bg-card/50 p-5">
+    <div className="space-y-4 rounded-2xl bg-card/50 p-5">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-lg font-bold text-foreground">🎭 Cast</h2>
         {cast.length > visible && (
