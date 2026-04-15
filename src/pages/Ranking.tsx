@@ -20,7 +20,8 @@ interface ActorRank {
 }
 
 export default function Ranking() {
-  const [dramas] = useState<Drama[]>(getDramas);
+  // Exclude watchlist dramas from ranking
+  const [dramas] = useState<Drama[]>(() => getDramas().filter(d => d.status !== 'plan-to-watch'));
   const [tab, setTab] = useState<Tab>("dramas");
   const [filter, setFilter] = useState<DramaFilter>("all");
 
@@ -63,7 +64,6 @@ export default function Ranking() {
           <h1 className="font-display text-3xl font-semibold">Ranking</h1>
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-2 border-b border-border pb-2">
           {(["dramas", "actors"] as Tab[]).map(t => (
             <button key={t} onClick={() => setTab(t)}

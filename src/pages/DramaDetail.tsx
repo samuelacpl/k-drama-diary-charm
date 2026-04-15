@@ -9,7 +9,7 @@ import ActorCard from "@/components/ActorCard";
 import { useState } from "react";
 import { Drama, ActorInfo } from "@/lib/types";
 
-function CastCarousel({ cast, onReact }: { cast: ActorInfo[]; onReact: (actorId: number, reaction: 'loved' | 'hated') => void }) {
+function CastCarousel({ cast, onReact, readOnly }: { cast: ActorInfo[]; onReact: (actorId: number, reaction: 'loved' | 'hated') => void; readOnly?: boolean }) {
   const [offset, setOffset] = useState(0);
   const visible = 6;
   const maxOffset = Math.max(0, cast.length - visible);
@@ -18,24 +18,29 @@ function CastCarousel({ cast, onReact }: { cast: ActorInfo[]; onReact: (actorId:
     <div className="glass-card rounded-2xl p-6 space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-lg font-semibold">🎭 Cast</h3>
-        {cast.length > visible && (
-          <div className="flex gap-1">
-            <button onClick={() => setOffset(o => Math.max(0, o - 1))} disabled={offset === 0}
-              className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30">
-              <ChevronLeft size={16} />
-            </button>
-            <button onClick={() => setOffset(o => Math.min(maxOffset, o + 1))} disabled={offset >= maxOffset}
-              className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30">
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {readOnly && (
+            <span className="text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-secondary">🔒 View only</span>
+          )}
+          {cast.length > visible && (
+            <div className="flex gap-1">
+              <button onClick={() => setOffset(o => Math.max(0, o - 1))} disabled={offset === 0}
+                className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30">
+                <ChevronLeft size={16} />
+              </button>
+              <button onClick={() => setOffset(o => Math.min(maxOffset, o + 1))} disabled={offset >= maxOffset}
+                className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30">
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
       <div className="overflow-hidden">
         <div className="flex gap-4 transition-transform duration-300" style={{ transform: `translateX(-${offset * (80 + 16)}px)` }}>
           {cast.map(actor => (
             <div key={actor.id} className="shrink-0" style={{ width: 80 }}>
-              <ActorCard actor={actor} onReact={(reaction) => onReact(actor.id, reaction)} />
+              <ActorCard actor={actor} onReact={readOnly ? undefined : (reaction) => onReact(actor.id, reaction)} />
             </div>
           ))}
         </div>
@@ -188,18 +193,10 @@ export default function DramaDetail() {
           </div>
         </div>
 
-        {/* Cast Carousel */}
-        {cast.length > 0 && (
-          <CastCarousel cast={cast} onReact={handleActorReact} />
-        )}
-
         {/* Sections */}
         <div className="space-y-4">
           <Section title="📖 Plot" content={drama.plot} />
-
-          {/* Quotes Slider */}
           {quotes.length > 0 && <QuotesSlider quotes={quotes} />}
-
           <Section title="💗 What I Loved" content={drama.whatILiked} />
           <Section title="✍️ My Review" content={drama.review} />
           {drama.watchedWithGlassimo && drama.glassimoReview && (
@@ -224,10 +221,17 @@ export default function DramaDetail() {
           </div>
         )}
 
-        {/* Fan Corner */}
-        {(drama.favoriteCharacters || drama.favoriteSongs || drama.secondLeadSyndrome) && (
-          <div className="glass-card rounded-2xl p-6 space-y-3 animate-fade-in">
+        {/* Fan Corner - with cast carousel (read-only reactions) */}
+        {(drama.favoriteCharacters || drama.favoriteSongs || drama.secondLeadSyndrome || cast.length > 0) && (
+          <div className="glass-card rounded-2xl p-6 space-y-4 animate-fade-in">
             <h3 className="font-display text-lg font-semibold">🧸 Fan Corner</h3>
+            {drama.watchedWithGlassimo && (
+              <p className="text-sm">🥂 <span className="font-semibold">Watched with Glassimo</span></p>
+            )}
+            {/* Cast carousel - reactions locked (read-only in detail view) */}
+            {cast.length > 0 && (
+              <CastCarousel cast={cast} onReact={handleActorReact} readOnly />
+            )}
             {drama.favoriteCharacters && <p className="text-sm"><span className="font-semibold">Favorite Characters:</span> {drama.favoriteCharacters}</p>}
             {drama.favoriteSongs && <p className="text-sm"><span className="font-semibold">🎵 OST:</span> {drama.favoriteSongs}</p>}
             {drama.secondLeadSyndrome && <p className="text-sm">💔 Had Second Lead Syndrome 😭</p>}

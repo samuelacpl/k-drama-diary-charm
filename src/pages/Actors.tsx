@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getDramas } from '@/lib/store';
 import { ActorInfo } from '@/lib/types';
@@ -15,8 +15,11 @@ interface ActorAggregate {
   hatedCount: number;
 }
 
+type SortOption = 'alpha' | 'loved' | 'watched';
+
 export default function Actors() {
-  const dramas = getDramas();
+  const dramas = getDramas().filter(d => d.status !== 'plan-to-watch');
+  const [sortBy, setSortBy] = useState<SortOption>('alpha');
 
   const actors = useMemo(() => {
     const map = new Map<number, ActorAggregate>();
@@ -31,8 +34,23 @@ export default function Actors() {
         if (a.reaction === 'hated') agg.hatedCount++;
       });
     });
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [dramas]);
+    const list = Array.from(map.values());
+    switch (sortBy) {
+      case 'loved':
+        return list.sort((a, b) => b.lovedCount - a.lovedCount || a.name.localeCompare(b.name));
+      case 'watched':
+        return list.sort((a, b) => b.dramas.length - a.dramas.length || a.name.localeCompare(b.name));
+      case 'alpha':
+      default:
+        return list.sort((a, b) => a.name.localeCompare(b.name));
+    }
+  }, [dramas, sortBy]);
+
+  const sortOptions: { value: SortOption; label: string }[] = [
+    { value: 'alpha', label: 'A → Z' },
+    { value: 'loved', label: '❤️ Most Loved' },
+    { value: 'watched', label: '📺 Most Watched' },
+  ];
 
   return (
     <div className="min-h-screen">
@@ -42,6 +60,20 @@ export default function Actors() {
           <h1 className="font-display text-2xl font-bold text-foreground">🎭 Actors</h1>
           <p className="text-sm text-muted-foreground">{actors.length} actors across your dramas</p>
         </div>
+
+        {/* Sorting */}
+        {actors.length > 0 && (
+          <div className="flex justify-center gap-2">
+            {sortOptions.map(opt => (
+              <button key={opt.value} onClick={() => setSortBy(opt.value)}
+                className={`text-xs font-semibold px-4 py-1.5 rounded-full transition-colors ${
+                  sortBy === opt.value ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-accent'
+                }`}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {actors.length === 0 ? (
           <div className="text-center py-16 space-y-3">

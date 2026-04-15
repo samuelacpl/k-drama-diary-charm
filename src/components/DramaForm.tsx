@@ -295,12 +295,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
         </div>
       </div>
 
-      {/* Cast from TMDb – Carousel with reactions */}
-      {cast.length > 0 && (
-        <CastFormCarousel cast={cast} onReact={(actorId, reaction) => {
-          setCast(prev => prev.map(a => a.id === actorId ? { ...a, reaction: a.reaction === reaction ? undefined : reaction } : a));
-        }} />
-      )}
+      {/* Cast carousel moved to Fan Corner section below */}
 
       {/* Watch Status */}
       <div className={sectionClass}>
@@ -440,6 +435,14 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
       {/* Fan Corner */}
       <div className={sectionClass}>
         <h2 className="font-display text-lg font-bold text-foreground">🧸 Fan Corner</h2>
+
+        {/* Cast Carousel - below Glassimo, above Favorite Characters */}
+        {cast.length > 0 && (
+          <CastFormCarousel cast={cast} onReact={(actorId, reaction) => {
+            setCast(prev => prev.map(a => a.id === actorId ? { ...a, reaction: a.reaction === reaction ? undefined : reaction } : a));
+          }} />
+        )}
+
         <div className="space-y-1">
           <label className={labelClass}>Favorite Characters</label>
           <input value={favoriteCharacters} onChange={e => setFavoriteCharacters(e.target.value)} placeholder="Who stole your heart..." className={inputClass} />
