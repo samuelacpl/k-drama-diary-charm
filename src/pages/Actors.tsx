@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { getDramas } from '@/lib/store';
 import { ActorInfo } from '@/lib/types';
 import { Navbar } from '@/components/Navbar';
@@ -54,7 +55,7 @@ export default function Actors() {
                 ? actor.profilePath
                 : profileUrl(actor.profilePath);
               return (
-                <div key={actor.id} className="glass-card rounded-2xl p-4 text-center space-y-2 animate-fade-in">
+                <Link key={actor.id} to={`/actor/${actor.id}`} className="glass-card rounded-2xl p-4 text-center space-y-2 animate-fade-in hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer">
                   <div className="w-20 h-20 mx-auto rounded-full overflow-hidden border-2 border-border bg-muted">
                     {imgSrc ? (
                       <img src={imgSrc} alt={actor.name} className="w-full h-full object-cover" loading="lazy" />
@@ -75,7 +76,7 @@ export default function Actors() {
                       </p>
                     ))}
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
