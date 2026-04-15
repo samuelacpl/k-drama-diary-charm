@@ -103,7 +103,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
 
     const castData = await getDramaCast(result.id);
     if (castData.length) {
-      const mapped: ActorInfo[] = castData.slice(0, 6).map(c => ({
+      const mapped: ActorInfo[] = castData.slice(0, 12).map(c => ({
         id: c.id, name: c.name, character: c.character,
         profilePath: c.profile_path || '',
       }));
@@ -169,7 +169,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
       {/* TMDb Search */}
       {hasTmdbKey() && (
         <div className={sectionClass}>
-          <h2 className="font-display text-lg font-bold text-foreground">🔍 Search TMDb</h2>
+          <h2 className="font-display text-lg font-bold text-foreground">🔍 Search K-Drama</h2>
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input

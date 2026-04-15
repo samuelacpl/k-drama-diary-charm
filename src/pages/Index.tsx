@@ -17,8 +17,10 @@ export default function Index() {
 
   const filtered = useMemo(() => {
     let list = dramas.filter((d) =>
-      d.title.toLowerCase().includes(search.toLowerCase()) ||
-      d.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()))
+      d.status !== 'plan-to-watch' && (
+        d.title.toLowerCase().includes(search.toLowerCase()) ||
+        (d.tags ?? []).some((t) => t.toLowerCase().includes(search.toLowerCase()))
+      )
     );
     switch (sort) {
       case "rating":

@@ -12,6 +12,8 @@ import Gallery from "./pages/Gallery";
 import Quotes from "./pages/Quotes";
 import Stats from "./pages/Stats";
 import Actors from "./pages/Actors";
+import ActorDetail from "./pages/ActorDetail";
+import Watchlist from "./pages/Watchlist";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,11 +29,13 @@ const App = () => (
           <Route path="/add" element={<AddDrama />} />
           <Route path="/drama/:id" element={<DramaDetail />} />
           <Route path="/drama/:id/edit" element={<EditDrama />} />
+          <Route path="/watchlist" element={<Watchlist />} />
           <Route path="/ranking" element={<Ranking />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/quotes" element={<Quotes />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/actors" element={<Actors />} />
+          <Route path="/actor/:actorId" element={<ActorDetail />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
