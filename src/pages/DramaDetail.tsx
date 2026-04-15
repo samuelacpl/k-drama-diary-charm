@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Heart, Trash2, Edit } from "lucide-react";
+import { ArrowLeft, Heart, Trash2, Edit, ChevronLeft, ChevronRight } from "lucide-react";
 import { getDrama, saveDrama, deleteDrama } from "@/lib/store";
 import { StarRating } from "@/components/StarRating";
 import EmotionalBadges from "@/components/EmotionalBadges";
@@ -153,20 +153,9 @@ export default function DramaDetail() {
           </div>
         </div>
 
-        {/* Cast Section */}
+        {/* Cast Carousel */}
         {cast.length > 0 && (
-          <div className="glass-card rounded-2xl p-6 space-y-4 animate-fade-in">
-            <h3 className="font-display text-lg font-semibold">🎭 Cast</h3>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
-              {cast.map(actor => (
-                <ActorCard
-                  key={actor.id}
-                  actor={actor}
-                  onReact={(reaction) => handleActorReact(actor.id, reaction)}
-                />
-              ))}
-            </div>
-          </div>
+          <CastCarousel cast={cast} onReact={handleActorReact} />
         )}
 
         {/* Sections */}
