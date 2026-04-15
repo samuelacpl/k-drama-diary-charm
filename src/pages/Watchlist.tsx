@@ -1,13 +1,15 @@
 import { useState, useCallback, useRef } from 'react';
-import { getDramas, saveDrama, updateDrama } from '@/lib/store';
+import { useNavigate } from 'react-router-dom';
+import { getDramas, saveDrama, deleteDrama } from '@/lib/store';
 import { Drama, ActorInfo } from '@/lib/types';
 import { Navbar } from '@/components/Navbar';
 import { searchDramas, getDramaDetails, getDramaCast, posterUrl, profileUrl, hasTmdbKey, TmdbSearchResult } from '@/lib/tmdb';
-import { Search, Eye, EyeOff, Tv } from 'lucide-react';
+import { Search, Tv } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 
 export default function Watchlist() {
+  const navigate = useNavigate();
   const [dramas, setDramas] = useState<Drama[]>(() => getDramas().filter(d => d.status === 'plan-to-watch'));
 
   // TMDb search
@@ -36,7 +38,6 @@ export default function Watchlist() {
     setQuery('');
     setResults([]);
 
-    // Check if already exists
     const existing = getDramas().find(d => d.tmdbId === result.id);
     if (existing) {
       toast.info('This drama is already in your diary!');
@@ -95,14 +96,10 @@ export default function Watchlist() {
     toast.success(`"${result.name}" added to Watchlist! 📌`);
   };
 
-  const toggleWatched = (drama: Drama) => {
-    const newStatus = drama.status === 'plan-to-watch' ? 'completed' : 'plan-to-watch';
-    updateDrama(drama.id, {
-      status: newStatus,
-      episodesWatched: newStatus === 'completed' ? drama.totalEpisodes : 0,
-    });
-    refresh();
-    toast.success(newStatus === 'completed' ? `"${drama.title}" marked as watched! ✅` : `"${drama.title}" moved back to watchlist`);
+  const handleMarkWatched = (drama: Drama) => {
+    // Navigate to Add Drama form pre-filled with this watchlist item's data
+    // We pass the drama ID so the form can load it as initial data
+    navigate(`/drama/${drama.id}/edit`);
   };
 
   return (
@@ -151,7 +148,7 @@ export default function Watchlist() {
               <div key={drama.id} className="glass-card rounded-2xl p-4 flex items-center gap-4 animate-fade-in">
                 <Checkbox
                   checked={false}
-                  onCheckedChange={() => toggleWatched(drama)}
+                  onCheckedChange={() => handleMarkWatched(drama)}
                   className="shrink-0"
                 />
                 <img

@@ -43,7 +43,7 @@ export interface Drama {
   cast: ActorInfo[];
 }
 
-export const PLATFORMS = ['Netflix', 'Viki', 'Disney+', 'TVING', 'Wavve', 'WeTV', 'iQIYI', 'StreamingCommunity', 'RamaOriental', 'Other'];
+export const PLATFORMS = ['Netflix', 'Viki', 'Disney+', 'StreamingCommunity', 'RamaOriental', 'Other'];
 
 export const GENRE_TAGS = [
   'Romance', 'Historical', 'Thriller', 'Comedy', 'Melodrama',
