@@ -22,7 +22,7 @@ function CastFormCarousel({ cast, onReact }: { cast: ActorInfo[]; onReact: (acto
   return (
     <div className="space-y-4 rounded-2xl border border-border bg-card/50 p-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-lg font-bold text-foreground">🎭 Fan Corner – Cast</h2>
+        <h2 className="font-display text-lg font-bold text-foreground">🎭 Cast</h2>
         {cast.length > visible && (
           <div className="flex gap-1">
             <button type="button" onClick={() => setOffset(o => Math.max(0, o - 1))} disabled={offset === 0}
