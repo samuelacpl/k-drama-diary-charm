@@ -7,7 +7,42 @@ import { Navbar } from "@/components/Navbar";
 import QuotesSlider from "@/components/QuotesSlider";
 import ActorCard from "@/components/ActorCard";
 import { useState } from "react";
-import { Drama } from "@/lib/types";
+import { Drama, ActorInfo } from "@/lib/types";
+
+function CastCarousel({ cast, onReact }: { cast: ActorInfo[]; onReact: (actorId: number, reaction: 'loved' | 'hated') => void }) {
+  const [offset, setOffset] = useState(0);
+  const visible = 6;
+  const maxOffset = Math.max(0, cast.length - visible);
+
+  return (
+    <div className="glass-card rounded-2xl p-6 space-y-4 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <h3 className="font-display text-lg font-semibold">🎭 Cast</h3>
+        {cast.length > visible && (
+          <div className="flex gap-1">
+            <button onClick={() => setOffset(o => Math.max(0, o - 1))} disabled={offset === 0}
+              className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30">
+              <ChevronLeft size={16} />
+            </button>
+            <button onClick={() => setOffset(o => Math.min(maxOffset, o + 1))} disabled={offset >= maxOffset}
+              className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30">
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="overflow-hidden">
+        <div className="flex gap-4 transition-transform duration-300" style={{ transform: `translateX(-${offset * (80 + 16)}px)` }}>
+          {cast.map(actor => (
+            <div key={actor.id} className="shrink-0" style={{ width: 80 }}>
+              <ActorCard actor={actor} onReact={(reaction) => onReact(actor.id, reaction)} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function DramaDetail() {
   const { id } = useParams<{ id: string }>();
