@@ -1,8 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { BookHeart, Home, Trophy, BarChart3, Image, Users, Quote, Tv } from "lucide-react";
+import { BookHeart, Home, Trophy, BarChart3, Image, Users, Quote, Tv, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export function Navbar() {
   const { pathname } = useLocation();
+  const { signOut } = useAuth();
 
   const links = [
     { to: "/", icon: Home, label: "Home" },
@@ -36,6 +38,9 @@ export function Navbar() {
               <span className="hidden md:inline">{label}</span>
             </Link>
           ))}
+          <button onClick={signOut} className="flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors ml-1" title="Sign Out">
+            <LogOut size={14} />
+          </button>
         </div>
       </div>
     </nav>
