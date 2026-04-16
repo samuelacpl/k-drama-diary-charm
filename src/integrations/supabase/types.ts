@@ -14,7 +14,123 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      dramas: {
+        Row: {
+          actors: string | null
+          cast_data: Json | null
+          cover_image: string | null
+          created_at: string
+          emotional_tags: Json | null
+          episodes_watched: number | null
+          favorite_characters: string | null
+          favorite_quote: string | null
+          favorite_quotes: Json | null
+          favorite_songs: string | null
+          glassimo_review: string | null
+          id: string
+          is_favorite: boolean | null
+          platform: string | null
+          plot: string | null
+          rating: number | null
+          review: string | null
+          second_lead_syndrome: boolean | null
+          status: string
+          tags: Json | null
+          title: string
+          tmdb_id: number | null
+          total_episodes: number | null
+          updated_at: string
+          user_id: string
+          watched_with_glassimo: boolean | null
+          watching_images: Json | null
+          what_i_liked: string | null
+        }
+        Insert: {
+          actors?: string | null
+          cast_data?: Json | null
+          cover_image?: string | null
+          created_at?: string
+          emotional_tags?: Json | null
+          episodes_watched?: number | null
+          favorite_characters?: string | null
+          favorite_quote?: string | null
+          favorite_quotes?: Json | null
+          favorite_songs?: string | null
+          glassimo_review?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          platform?: string | null
+          plot?: string | null
+          rating?: number | null
+          review?: string | null
+          second_lead_syndrome?: boolean | null
+          status?: string
+          tags?: Json | null
+          title: string
+          tmdb_id?: number | null
+          total_episodes?: number | null
+          updated_at?: string
+          user_id: string
+          watched_with_glassimo?: boolean | null
+          watching_images?: Json | null
+          what_i_liked?: string | null
+        }
+        Update: {
+          actors?: string | null
+          cast_data?: Json | null
+          cover_image?: string | null
+          created_at?: string
+          emotional_tags?: Json | null
+          episodes_watched?: number | null
+          favorite_characters?: string | null
+          favorite_quote?: string | null
+          favorite_quotes?: Json | null
+          favorite_songs?: string | null
+          glassimo_review?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          platform?: string | null
+          plot?: string | null
+          rating?: number | null
+          review?: string | null
+          second_lead_syndrome?: boolean | null
+          status?: string
+          tags?: Json | null
+          title?: string
+          tmdb_id?: number | null
+          total_episodes?: number | null
+          updated_at?: string
+          user_id?: string
+          watched_with_glassimo?: boolean | null
+          watching_images?: Json | null
+          what_i_liked?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
