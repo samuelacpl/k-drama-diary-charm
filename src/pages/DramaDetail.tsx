@@ -19,9 +19,6 @@ function CastCarousel({ cast, onReact, readOnly }: { cast: ActorInfo[]; onReact:
       <div className="flex items-center justify-between">
         <h3 className="font-display text-lg font-semibold">🎭 Cast</h3>
         <div className="flex items-center gap-2">
-          {readOnly && (
-            <span className="text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-secondary">🔒 View only</span>
-          )}
           {cast.length > visible && (
             <div className="flex gap-1">
               <button onClick={() => setOffset(o => Math.max(0, o - 1))} disabled={offset === 0}

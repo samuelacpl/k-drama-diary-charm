@@ -4,13 +4,15 @@ import { getDramas, saveDrama, deleteDrama } from '@/lib/store';
 import { Drama, ActorInfo } from '@/lib/types';
 import { Navbar } from '@/components/Navbar';
 import { searchDramas, getDramaDetails, getDramaCast, posterUrl, profileUrl, hasTmdbKey, TmdbSearchResult } from '@/lib/tmdb';
-import { Search, Tv } from 'lucide-react';
+import { Search, Tv, X as XIcon } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 export default function Watchlist() {
   const navigate = useNavigate();
   const [dramas, setDramas] = useState<Drama[]>(() => getDramas().filter(d => d.status === 'plan-to-watch'));
+  const [selectedDrama, setSelectedDrama] = useState<Drama | null>(null);
 
   // TMDb search
   const [query, setQuery] = useState('');
@@ -97,9 +99,14 @@ export default function Watchlist() {
   };
 
   const handleMarkWatched = (drama: Drama) => {
-    // Navigate to Add Drama form pre-filled with this watchlist item's data
-    // We pass the drama ID so the form can load it as initial data
     navigate(`/drama/${drama.id}/edit`);
+  };
+
+  const handleRemove = (e: React.MouseEvent, drama: Drama) => {
+    e.stopPropagation();
+    deleteDrama(drama.id);
+    refresh();
+    toast.success(`"${drama.title}" removed from Watchlist`);
   };
 
   return (
@@ -145,11 +152,13 @@ export default function Watchlist() {
         {dramas.length > 0 ? (
           <div className="space-y-3">
             {dramas.map(drama => (
-              <div key={drama.id} className="glass-card rounded-2xl p-4 flex items-center gap-4 animate-fade-in">
+              <div key={drama.id} onClick={() => setSelectedDrama(drama)}
+                className="glass-card rounded-2xl p-4 flex items-center gap-4 animate-fade-in cursor-pointer hover:border-primary/30 transition-colors">
                 <Checkbox
                   checked={false}
-                  onCheckedChange={() => handleMarkWatched(drama)}
+                  onCheckedChange={(e) => { e && handleMarkWatched(drama); }}
                   className="shrink-0"
+                  onClick={(e) => e.stopPropagation()}
                 />
                 <img
                   src={drama.coverImage || '/placeholder.svg'}
@@ -164,6 +173,10 @@ export default function Watchlist() {
                     <p className="text-[10px] text-muted-foreground truncate mt-0.5">{drama.actors}</p>
                   )}
                 </div>
+                <button onClick={(e) => handleRemove(e, drama)}
+                  className="p-2 rounded-full hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive shrink-0">
+                  <XIcon size={16} />
+                </button>
               </div>
             ))}
           </div>
@@ -175,6 +188,50 @@ export default function Watchlist() {
           </div>
         )}
       </main>
+
+      {/* Drama Detail Modal */}
+      <Dialog open={!!selectedDrama} onOpenChange={(open) => !open && setSelectedDrama(null)}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto p-0 rounded-2xl border-border">
+          {selectedDrama && (
+            <div className="space-y-4 p-6">
+              <img
+                src={selectedDrama.coverImage || '/placeholder.svg'}
+                alt={selectedDrama.title}
+                className="w-full aspect-[2/3] object-cover rounded-xl border border-border"
+              />
+              <h2 className="font-display text-xl font-bold text-foreground">{selectedDrama.title}</h2>
+              <p className="text-xs text-muted-foreground">{selectedDrama.totalEpisodes} episodes</p>
+
+              {selectedDrama.plot && (
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold text-foreground">📖 Overview</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{selectedDrama.plot}</p>
+                </div>
+              )}
+
+              {(selectedDrama.cast?.length ?? 0) > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-foreground">🎭 Cast</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {selectedDrama.cast.slice(0, 8).map(actor => {
+                      const imgSrc = actor.profilePath?.startsWith('http') ? actor.profilePath : profileUrl(actor.profilePath);
+                      return (
+                        <div key={actor.id} className="text-center" style={{ width: 60 }}>
+                          <div className="w-12 h-12 mx-auto rounded-full overflow-hidden border border-border bg-muted">
+                            {imgSrc ? <img src={imgSrc} alt={actor.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-sm">🎭</div>}
+                          </div>
+                          <p className="text-[10px] font-semibold text-foreground mt-1 line-clamp-1">{actor.name}</p>
+                          <p className="text-[9px] text-muted-foreground line-clamp-1">{actor.character}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

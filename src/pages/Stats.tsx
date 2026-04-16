@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 
 export default function Stats() {
-  const dramas = getDramas();
+  const dramas = getDramas().filter(d => d.status !== 'plan-to-watch');
   const completed = dramas.filter(d => d.status === 'completed').length;
   const totalEps = dramas.reduce((s, d) => s + (d.episodesWatched || 0), 0);
   const avgRating = dramas.length ? (dramas.reduce((s, d) => s + d.rating, 0) / dramas.length).toFixed(1) : '0';

@@ -65,8 +65,11 @@ function CastFormCarousel({ cast, onReact }: { cast: ActorInfo[]; onReact: (acto
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
+    reader.onloadend = () => {
+      if (reader.result) resolve(reader.result as string);
+      else reject(new Error('Empty result'));
+    };
+    reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
 }
@@ -176,13 +179,19 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
 
   const handleWatchingImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
-    for (const file of Array.from(files)) {
+    if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+    for (const file of fileArray) {
       if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name} is too large (max 5MB)`); continue; }
-      const dataUrl = await fileToDataUrl(file);
-      setWatchingImages(prev => [...prev, { id: crypto.randomUUID(), dataUrl, comment: '' }]);
+      try {
+        const dataUrl = await fileToDataUrl(file);
+        setWatchingImages(prev => [...prev, { id: crypto.randomUUID(), dataUrl, comment: '' }]);
+      } catch {
+        toast.error(`Failed to load ${file.name}`);
+      }
     }
-    e.target.value = '';
+    // Reset input value so same file can be re-selected
+    if (e.target) e.target.value = '';
   };
 
   const removeWatchingImage = (id: string) => setWatchingImages(prev => prev.filter(img => img.id !== id));
