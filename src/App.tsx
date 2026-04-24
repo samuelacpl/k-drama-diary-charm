@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { cloudGetDramas } from "@/lib/cloudStore";
-import { setDramasLocal } from "@/lib/store";
 import Index from "./pages/Index";
 import AddDrama from "./pages/AddDrama";
 import DramaDetail from "./pages/DramaDetail";
@@ -40,49 +39,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function CloudSync({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
-
-  useEffect(() => {
-    if (!user) return;
-
-    const syncData = async () => {
-      try {
-        console.log("Inizio sincronizzazione Cloud...");
-
-        // Chiamata al Cloud
-        const cloudDramas = await cloudGetDramas();
-
-        if (cloudDramas) {
-          console.log("Dati ricevuti dal Cloud:", cloudDramas.length);
-
-          // Salvataggio locale
-          setDramasLocal(cloudDramas);
-
-          // Trigger per aggiornare le pagine aperte
-          window.dispatchEvent(new Event("storage"));
-
-          console.log("Sincronizzazione completata con successo.");
-
-          // DEBUG SOLO PER IOS: Rimuovi dopo il test se vedi che funziona
-          // alert(`iOS Debug: Sincronizzati ${cloudDramas.length} drama!`);
-        } else {
-          console.warn("Il Cloud ha restituito un array vuoto o nullo.");
-        }
-      } catch (err: any) {
-        console.error("Errore durante la sincronizzazione:", err);
-        // Questo alert apparirà sul tuo iPhone se c'è un blocco di rete o sicurezza
-        alert("ERRORE SYNC IOS: " + (err.message || "Errore sconosciuto"));
-      }
-    };
-
-    // Applichiamo il timeout consigliato per iOS
-    const timer = setTimeout(() => {
-      syncData();
-    }, 1000); // 1 secondo di delay per essere sicuri che il browser sia pronto
-
-    return () => clearTimeout(timer);
-  }, [user]);
-
+  // Ora che usiamo il Cloud-Only, non serve più sincronizzare manualmente qui.
+  // Le singole pagine caricano i dati all'avvio.
   return <>{children}</>;
 }
 

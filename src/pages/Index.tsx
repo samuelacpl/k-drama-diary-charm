@@ -34,10 +34,10 @@ export default function Index() {
     refresh();
 
     // Aggiorna quando il CloudSync finisce o altre schede salvano
-    window.addEventListener("storage", refresh);
+    window.addEventListener("storage_updated", refresh);
 
     return () => {
-      window.removeEventListener("storage", refresh);
+      window.removeEventListener("storage_updated", refresh);
     };
   }, [refresh]);
 

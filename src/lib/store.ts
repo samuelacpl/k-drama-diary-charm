@@ -1,73 +1,59 @@
 import { Drama } from "./types";
-import { cloudSaveDrama, cloudDeleteDrama } from "./cloudStore";
+import { cloudSaveDrama, cloudDeleteDrama, cloudGetDramas } from "./cloudStore";
 import { supabase } from "@/integrations/supabase/client";
 
-const STORAGE_KEY = "kdrama-diary";
-
-// Helper interno per salvare senza crashare
-function safeSetItem(data: Drama[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch (e) {
-    console.warn(
-      "Storage pieno o bloccato, i dati sono aggiornati solo in RAM.",
-    );
-  }
-}
-
-export function getDramas(): Drama[] {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return []; // Se il disco è bloccato, l'app crederà sia vuoto e scaricherà dal cloud
-  }
-}
-
-// Questa funzione ora non crasha mai
-export function setDramasLocal(dramas: Drama[]): void {
-  safeSetItem(dramas);
-}
-
+// Recupera l'ID utente corrente
 async function getUserId(): Promise<string | null> {
   const { data } = await supabase.auth.getSession();
   return data.session?.user?.id ?? null;
 }
 
-export function saveDrama(drama: Drama): void {
-  const dramas = getDramas();
-  const idx = dramas.findIndex((d) => d.id === drama.id);
-
-  if (idx >= 0) dramas[idx] = drama;
-  else dramas.push(drama);
-
-  // 1. Prova a salvare localmente (non crasha più)
-  safeSetItem(dramas);
-
-  // 2. Forza sempre il salvataggio Cloud
-  getUserId().then((uid) => {
-    if (uid) cloudSaveDrama(drama, uid);
-  });
-}
-
-export function updateDrama(id: string, data: Partial<Drama>): void {
-  const dramas = getDramas();
-  const idx = dramas.findIndex((d) => d.id === id);
-  if (idx >= 0) {
-    dramas[idx] = { ...dramas[idx], ...data };
-    safeSetItem(dramas);
-    getUserId().then((uid) => {
-      if (uid) cloudSaveDrama(dramas[idx], uid);
-    });
+// ORA ASINCRONA: Prende i dati solo dal Cloud
+export async function getDramas(): Promise<Drama[]> {
+  try {
+    const data = await cloudGetDramas();
+    return data || [];
+  } catch (error) {
+    console.error("Errore recupero dal database:", error);
+    return [];
   }
 }
 
-export function deleteDrama(id: string): void {
-  const dramas = getDramas().filter((d) => d.id !== id);
-  safeSetItem(dramas);
-  cloudDeleteDrama(id);
+// Salva direttamente nel Cloud
+export async function saveDrama(drama: Drama): Promise<void> {
+  const uid = await getUserId();
+  if (uid) {
+    await cloudSaveDrama(drama, uid);
+    // Lanciamo un evento per avvisare le altre parti dell'app che i dati sono cambiati
+    window.dispatchEvent(new Event("storage_updated"));
+  } else {
+    console.error("Utente non loggato, impossibile salvare.");
+  }
 }
 
-export function getDrama(id: string): Drama | undefined {
-  return getDramas().find((d) => d.id === id);
+// Aggiorna direttamente nel Cloud
+export async function updateDrama(
+  id: string,
+  data: Partial<Drama>,
+): Promise<void> {
+  const dramas = await getDramas();
+  const drama = dramas.find((d) => d.id === id);
+  const uid = await getUserId();
+
+  if (drama && uid) {
+    const updatedDrama = { ...drama, ...data };
+    await cloudSaveDrama(updatedDrama, uid);
+    window.dispatchEvent(new Event("storage_updated"));
+  }
+}
+
+// Elimina direttamente dal Cloud
+export async function deleteDrama(id: string): Promise<void> {
+  await cloudDeleteDrama(id);
+  window.dispatchEvent(new Event("storage_updated"));
+}
+
+export async function getDrama(id: string): Promise<Drama | undefined> {
+  const dramas = await getDramas();
+  return dramas.find((d) => d.id === id);
 }
