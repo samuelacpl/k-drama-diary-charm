@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Search, SortAsc } from "lucide-react";
+import { Plus, Search, SortAsc, Loader2 } from "lucide-react"; // Aggiunto Loader2
 import { getDramas } from "@/lib/store";
 import { Drama } from "@/lib/types";
 import { DramaCard } from "@/components/DramaCard";
@@ -9,30 +9,42 @@ import { Navbar } from "@/components/Navbar";
 type SortOption = "rating" | "date" | "favorites";
 
 export default function Index() {
-  const [dramas, setDramas] = useState<Drama[]>(getDramas);
+  // 1. Stato iniziale sempre come array vuoto
+  const [dramas, setDramas] = useState<Drama[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortOption>("date");
 
-  const refresh = useCallback(() => {
+  // 2. Refresh dei dati asincrono
+  const refresh = useCallback(async () => {
     console.log("Refresh dati in corso...");
-    setDramas(getDramas());
+    try {
+      const data = await getDramas();
+      setDramas(data);
+    } catch (error) {
+      console.error("Errore nel refresh dei drama:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  // Ascolta i cambiamenti (sia dal CloudSync che da altre pagine)
+  // 3. Effetto per il caricamento iniziale e ascolto eventi
   useEffect(() => {
-    // Aggiorna quando il CloudSync finisce o quando altre schede salvano
-    window.addEventListener("storage", refresh);
+    // Caricamento immediato
+    refresh();
 
-    // Un piccolo refresh di sicurezza dopo 2 secondi nel caso il Cloud fosse lento
-    const timeout = setTimeout(refresh, 2000);
+    // Aggiorna quando il CloudSync finisce o altre schede salvano
+    window.addEventListener("storage", refresh);
 
     return () => {
       window.removeEventListener("storage", refresh);
-      clearTimeout(timeout);
     };
   }, [refresh]);
 
   const filtered = useMemo(() => {
+    // Sicurezza: se dramas non è ancora un array, restituisci array vuoto
+    if (!Array.isArray(dramas)) return [];
+
     let list = dramas.filter(
       (d) =>
         d.status !== "plan-to-watch" &&
@@ -41,6 +53,7 @@ export default function Index() {
             t.toLowerCase().includes(search.toLowerCase()),
           )),
     );
+
     switch (sort) {
       case "rating":
         list.sort((a, b) => b.rating - a.rating);
@@ -62,8 +75,8 @@ export default function Index() {
     <div className="min-h-screen">
       <Navbar />
 
-      {/* Hero */}
-      {dramas.length === 0 && (
+      {/* Hero: mostrato solo se abbiamo caricato e non ci sono drama */}
+      {!isLoading && dramas.length === 0 && (
         <div className="relative h-72 sm:h-80 overflow-hidden bg-gradient-to-br from-blush via-lavender to-cream">
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
             <h1 className="font-display text-4xl sm:text-5xl font-semibold text-foreground mb-3">
@@ -110,7 +123,15 @@ export default function Index() {
           </div>
         </div>
 
-        {filtered.length > 0 ? (
+        {/* 4. Gestione caricamento specifico */}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="animate-spin text-primary mb-2" size={32} />
+            <p className="text-sm text-muted-foreground">
+              Loading your dramas...
+            </p>
+          </div>
+        ) : filtered.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
             {filtered.map((drama) => (
               <DramaCard key={drama.id} drama={drama} onUpdate={refresh} />
