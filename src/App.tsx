@@ -25,12 +25,16 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-muted-foreground animate-pulse">Loading Auth...</p>
+        </div>
       </div>
     );
+
   if (!user) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 }
@@ -44,30 +48,39 @@ function CloudSync({ children }: { children: React.ReactNode }) {
     const syncData = async () => {
       try {
         console.log("Inizio sincronizzazione Cloud...");
+
+        // Chiamata al Cloud
         const cloudDramas = await cloudGetDramas();
 
-        if (cloudDramas && cloudDramas.length > 0) {
-          // Aggiorniamo il localStorage
+        if (cloudDramas) {
+          console.log("Dati ricevuti dal Cloud:", cloudDramas.length);
+
+          // Salvataggio locale
           setDramasLocal(cloudDramas);
 
-          // TRUCCO: Poiché l'evento "storage" non sempre triggera i componenti nella stessa scheda,
-          // forziamo un refresh dello stato globale se necessario,
-          // o semplicemente lasciamo che le pagine (che ora usano useEffect)
-          // facciano il loro lavoro al montaggio.
+          // Trigger per aggiornare le pagine aperte
           window.dispatchEvent(new Event("storage"));
 
-          console.log(
-            "Sincronizzazione completata:",
-            cloudDramas.length,
-            "drama.",
-          );
+          console.log("Sincronizzazione completata con successo.");
+
+          // DEBUG SOLO PER IOS: Rimuovi dopo il test se vedi che funziona
+          // alert(`iOS Debug: Sincronizzati ${cloudDramas.length} drama!`);
+        } else {
+          console.warn("Il Cloud ha restituito un array vuoto o nullo.");
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Errore durante la sincronizzazione:", err);
+        // Questo alert apparirà sul tuo iPhone se c'è un blocco di rete o sicurezza
+        alert("ERRORE SYNC IOS: " + (err.message || "Errore sconosciuto"));
       }
     };
 
-    syncData();
+    // Applichiamo il timeout consigliato per iOS
+    const timer = setTimeout(() => {
+      syncData();
+    }, 1000); // 1 secondo di delay per essere sicuri che il browser sia pronto
+
+    return () => clearTimeout(timer);
   }, [user]);
 
   return <>{children}</>;
