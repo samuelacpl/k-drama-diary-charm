@@ -4,17 +4,29 @@ import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "kdrama-diary";
 
+// Helper interno per salvare senza crashare
+function safeSetItem(data: Drama[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.warn(
+      "Storage pieno o bloccato, i dati sono aggiornati solo in RAM.",
+    );
+  }
+}
+
 export function getDramas(): Drama[] {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     return data ? JSON.parse(data) : [];
   } catch {
-    return [];
+    return []; // Se il disco è bloccato, l'app crederà sia vuoto e scaricherà dal cloud
   }
 }
 
+// Questa funzione ora non crasha mai
 export function setDramasLocal(dramas: Drama[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(dramas));
+  safeSetItem(dramas);
 }
 
 async function getUserId(): Promise<string | null> {
@@ -25,11 +37,17 @@ async function getUserId(): Promise<string | null> {
 export function saveDrama(drama: Drama): void {
   const dramas = getDramas();
   const idx = dramas.findIndex((d) => d.id === drama.id);
+
   if (idx >= 0) dramas[idx] = drama;
   else dramas.push(drama);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(dramas));
-  // Fire-and-forget cloud sync
-  getUserId().then(uid => { if (uid) cloudSaveDrama(drama, uid); });
+
+  // 1. Prova a salvare localmente (non crasha più)
+  safeSetItem(dramas);
+
+  // 2. Forza sempre il salvataggio Cloud
+  getUserId().then((uid) => {
+    if (uid) cloudSaveDrama(drama, uid);
+  });
 }
 
 export function updateDrama(id: string, data: Partial<Drama>): void {
@@ -37,14 +55,16 @@ export function updateDrama(id: string, data: Partial<Drama>): void {
   const idx = dramas.findIndex((d) => d.id === id);
   if (idx >= 0) {
     dramas[idx] = { ...dramas[idx], ...data };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(dramas));
-    getUserId().then(uid => { if (uid) cloudSaveDrama(dramas[idx], uid); });
+    safeSetItem(dramas);
+    getUserId().then((uid) => {
+      if (uid) cloudSaveDrama(dramas[idx], uid);
+    });
   }
 }
 
 export function deleteDrama(id: string): void {
   const dramas = getDramas().filter((d) => d.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(dramas));
+  safeSetItem(dramas);
   cloudDeleteDrama(id);
 }
 

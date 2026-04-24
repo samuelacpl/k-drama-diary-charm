@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Search, SortAsc } from "lucide-react";
 import { getDramas } from "@/lib/store";
@@ -13,14 +13,33 @@ export default function Index() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortOption>("date");
 
-  const refresh = () => setDramas(getDramas());
+  const refresh = useCallback(() => {
+    console.log("Refresh dati in corso...");
+    setDramas(getDramas());
+  }, []);
+
+  // Ascolta i cambiamenti (sia dal CloudSync che da altre pagine)
+  useEffect(() => {
+    // Aggiorna quando il CloudSync finisce o quando altre schede salvano
+    window.addEventListener("storage", refresh);
+
+    // Un piccolo refresh di sicurezza dopo 2 secondi nel caso il Cloud fosse lento
+    const timeout = setTimeout(refresh, 2000);
+
+    return () => {
+      window.removeEventListener("storage", refresh);
+      clearTimeout(timeout);
+    };
+  }, [refresh]);
 
   const filtered = useMemo(() => {
-    let list = dramas.filter((d) =>
-      d.status !== 'plan-to-watch' && (
-        d.title.toLowerCase().includes(search.toLowerCase()) ||
-        (d.tags ?? []).some((t) => t.toLowerCase().includes(search.toLowerCase()))
-      )
+    let list = dramas.filter(
+      (d) =>
+        d.status !== "plan-to-watch" &&
+        (d.title.toLowerCase().includes(search.toLowerCase()) ||
+          (d.tags ?? []).some((t) =>
+            t.toLowerCase().includes(search.toLowerCase()),
+          )),
     );
     switch (sort) {
       case "rating":
@@ -31,7 +50,10 @@ export default function Index() {
         break;
       case "date":
       default:
-        list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        list.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
     }
     return list;
   }, [dramas, search, sort]);
@@ -58,7 +80,10 @@ export default function Index() {
       <main className="container py-8 space-y-6">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Search
+              size={16}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
             <input
               type="text"
               placeholder="Search dramas or tags..."
@@ -94,10 +119,15 @@ export default function Index() {
         ) : (
           <div className="text-center py-20">
             <p className="text-muted-foreground text-lg mb-4">
-              {search ? "No dramas found ✨" : "Start adding your favorite dramas!"}
+              {search
+                ? "No dramas found ✨"
+                : "Start adding your favorite dramas!"}
             </p>
             {!search && (
-              <Link to="/add" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-full font-semibold hover:opacity-90 transition">
+              <Link
+                to="/add"
+                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-full font-semibold hover:opacity-90 transition"
+              >
                 <Plus size={18} />
                 Add Your First Drama
               </Link>
@@ -106,7 +136,10 @@ export default function Index() {
         )}
       </main>
 
-      <Link to="/add" className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105 animate-float">
+      <Link
+        to="/add"
+        className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105 animate-float"
+      >
         <Plus size={24} />
       </Link>
     </div>

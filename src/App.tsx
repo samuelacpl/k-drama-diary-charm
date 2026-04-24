@@ -25,7 +25,12 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
   if (!user) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 }
@@ -35,14 +40,34 @@ function CloudSync({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!user) return;
-    // On login, fetch cloud data and merge into localStorage
-    cloudGetDramas().then(cloudDramas => {
-      if (cloudDramas.length > 0) {
-        setDramasLocal(cloudDramas);
-        // Trigger re-render by dispatching storage event
-        window.dispatchEvent(new Event('storage'));
+
+    const syncData = async () => {
+      try {
+        console.log("Inizio sincronizzazione Cloud...");
+        const cloudDramas = await cloudGetDramas();
+
+        if (cloudDramas && cloudDramas.length > 0) {
+          // Aggiorniamo il localStorage
+          setDramasLocal(cloudDramas);
+
+          // TRUCCO: Poiché l'evento "storage" non sempre triggera i componenti nella stessa scheda,
+          // forziamo un refresh dello stato globale se necessario,
+          // o semplicemente lasciamo che le pagine (che ora usano useEffect)
+          // facciano il loro lavoro al montaggio.
+          window.dispatchEvent(new Event("storage"));
+
+          console.log(
+            "Sincronizzazione completata:",
+            cloudDramas.length,
+            "drama.",
+          );
+        }
+      } catch (err) {
+        console.error("Errore durante la sincronizzazione:", err);
       }
-    });
+    };
+
+    syncData();
   }, [user]);
 
   return <>{children}</>;
@@ -58,17 +83,94 @@ const App = () => (
           <CloudSync>
             <Routes>
               <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-              <Route path="/add" element={<ProtectedRoute><AddDrama /></ProtectedRoute>} />
-              <Route path="/drama/:id" element={<ProtectedRoute><DramaDetail /></ProtectedRoute>} />
-              <Route path="/drama/:id/edit" element={<ProtectedRoute><EditDrama /></ProtectedRoute>} />
-              <Route path="/watchlist" element={<ProtectedRoute><Watchlist /></ProtectedRoute>} />
-              <Route path="/ranking" element={<ProtectedRoute><Ranking /></ProtectedRoute>} />
-              <Route path="/gallery" element={<ProtectedRoute><Gallery /></ProtectedRoute>} />
-              <Route path="/quotes" element={<ProtectedRoute><Quotes /></ProtectedRoute>} />
-              <Route path="/stats" element={<ProtectedRoute><Stats /></ProtectedRoute>} />
-              <Route path="/actors" element={<ProtectedRoute><Actors /></ProtectedRoute>} />
-              <Route path="/actor/:actorId" element={<ProtectedRoute><ActorDetail /></ProtectedRoute>} />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Index />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/add"
+                element={
+                  <ProtectedRoute>
+                    <AddDrama />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/drama/:id"
+                element={
+                  <ProtectedRoute>
+                    <DramaDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/drama/:id/edit"
+                element={
+                  <ProtectedRoute>
+                    <EditDrama />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/watchlist"
+                element={
+                  <ProtectedRoute>
+                    <Watchlist />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/ranking"
+                element={
+                  <ProtectedRoute>
+                    <Ranking />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/gallery"
+                element={
+                  <ProtectedRoute>
+                    <Gallery />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/quotes"
+                element={
+                  <ProtectedRoute>
+                    <Quotes />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/stats"
+                element={
+                  <ProtectedRoute>
+                    <Stats />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/actors"
+                element={
+                  <ProtectedRoute>
+                    <Actors />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/actor/:actorId"
+                element={
+                  <ProtectedRoute>
+                    <ActorDetail />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </CloudSync>
