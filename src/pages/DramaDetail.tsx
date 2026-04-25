@@ -1,15 +1,30 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Heart, Trash2, Edit, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ArrowLeft,
+  Heart,
+  Trash2,
+  Edit,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { getDrama, saveDrama, deleteDrama } from "@/lib/store";
 import { StarRating } from "@/components/StarRating";
 import EmotionalBadges from "@/components/EmotionalBadges";
 import { Navbar } from "@/components/Navbar";
 import QuotesSlider from "@/components/QuotesSlider";
 import ActorCard from "@/components/ActorCard";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Drama, ActorInfo } from "@/lib/types";
 
-function CastCarousel({ cast, onReact, readOnly }: { cast: ActorInfo[]; onReact: (actorId: number, reaction: 'loved' | 'hated') => void; readOnly?: boolean }) {
+function CastCarousel({
+  cast,
+  onReact,
+  readOnly,
+}: {
+  cast: ActorInfo[];
+  onReact: (actorId: number, reaction: "loved" | "hated") => void;
+  readOnly?: boolean;
+}) {
   const [offset, setOffset] = useState(0);
   const visible = 6;
   const maxOffset = Math.max(0, cast.length - visible);
@@ -21,12 +36,18 @@ function CastCarousel({ cast, onReact, readOnly }: { cast: ActorInfo[]; onReact:
         <div className="flex items-center gap-2">
           {cast.length > visible && (
             <div className="flex gap-1">
-              <button onClick={() => setOffset(o => Math.max(0, o - 1))} disabled={offset === 0}
-                className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30">
+              <button
+                onClick={() => setOffset((o) => Math.max(0, o - 1))}
+                disabled={offset === 0}
+                className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30"
+              >
                 <ChevronLeft size={16} />
               </button>
-              <button onClick={() => setOffset(o => Math.min(maxOffset, o + 1))} disabled={offset >= maxOffset}
-                className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30">
+              <button
+                onClick={() => setOffset((o) => Math.min(maxOffset, o + 1))}
+                disabled={offset >= maxOffset}
+                className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30"
+              >
                 <ChevronRight size={16} />
               </button>
             </div>
@@ -34,10 +55,20 @@ function CastCarousel({ cast, onReact, readOnly }: { cast: ActorInfo[]; onReact:
         </div>
       </div>
       <div className="overflow-hidden">
-        <div className="flex gap-4 transition-transform duration-300" style={{ transform: `translateX(-${offset * (80 + 16)}px)` }}>
-          {cast.map(actor => (
+        <div
+          className="flex gap-4 transition-transform duration-300"
+          style={{ transform: `translateX(-${offset * (80 + 16)}px)` }}
+        >
+          {cast.map((actor) => (
             <div key={actor.id} className="shrink-0" style={{ width: 80 }}>
-              <ActorCard actor={actor} onReact={readOnly ? undefined : (reaction) => onReact(actor.id, reaction)} />
+              <ActorCard
+                actor={actor}
+                onReact={
+                  readOnly
+                    ? undefined
+                    : (reaction) => onReact(actor.id, reaction)
+                }
+              />
             </div>
           ))}
         </div>
@@ -49,7 +80,38 @@ function CastCarousel({ cast, onReact, readOnly }: { cast: ActorInfo[]; onReact:
 export default function DramaDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [drama, setDrama] = useState<Drama | undefined>(() => getDrama(id || ""));
+  // inizializziamo a undefined e aggiungiamo stato di caricamennto
+  const [drama, setDrama] = useState<Drama | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+  // carichiamo il drama all'avvio, se l'id è presente
+  useEffect(() => {
+    const loadDrama = async () => {
+      if (!id) return;
+      try {
+        const data = await getDrama(id);
+        setDrama(data);
+      } catch (error) {
+        console.error("Errore nel caricamento del drama:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadDrama();
+  }, [id]);
+
+  // 3. Gestione caricamento
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <Navbar />
+        <div className="flex items-center justify-center py-20">
+          <p className="text-muted-foreground animate-pulse">
+            Loading drama details...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!drama) {
     return (
@@ -57,31 +119,38 @@ export default function DramaDetail() {
         <Navbar />
         <div className="container py-20 text-center">
           <p className="text-muted-foreground text-lg">Drama not found 😢</p>
-          <Link to="/" className="text-primary font-semibold mt-4 inline-block">Go home</Link>
+          <Link to="/" className="text-primary font-semibold mt-4 inline-block">
+            Go home
+          </Link>
         </div>
       </div>
     );
   }
 
-  const toggleFavorite = () => {
+  const toggleFavorite = async () => {
     const updated = { ...drama, isFavorite: !drama.isFavorite };
-    saveDrama(updated);
+    await saveDrama(updated);
     setDrama(updated);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (confirm("Delete this drama from your diary?")) {
-      deleteDrama(drama.id);
+      await deleteDrama(drama.id);
       navigate("/");
     }
   };
 
-  const handleActorReact = (actorId: number, reaction: 'loved' | 'hated') => {
-    const updatedCast = (drama.cast ?? []).map(a =>
-      a.id === actorId ? { ...a, reaction: a.reaction === reaction ? undefined : reaction } : a
+  const handleActorReact = async (
+    actorId: number,
+    reaction: "loved" | "hated",
+  ) => {
+    const updatedCast = (drama.cast ?? []).map((a) =>
+      a.id === actorId
+        ? { ...a, reaction: a.reaction === reaction ? undefined : reaction }
+        : a,
     );
     const updated = { ...drama, cast: updatedCast };
-    saveDrama(updated);
+    await saveDrama(updated);
     setDrama(updated);
   };
 
@@ -96,17 +165,24 @@ export default function DramaDetail() {
   const emotionalTags = drama.emotionalTags ?? [];
   const watchingImages = drama.watchingImages ?? [];
   const cast = drama.cast ?? [];
-  const quotes = drama.favoriteQuotes?.length ? drama.favoriteQuotes : (drama.favoriteQuote ? [drama.favoriteQuote] : []);
+  const quotes = drama.favoriteQuotes?.length
+    ? drama.favoriteQuotes
+    : drama.favoriteQuote
+      ? [drama.favoriteQuote]
+      : [];
 
-  const progressPct = (drama.totalEpisodes ?? 0) > 0
-    ? Math.round(((drama.episodesWatched ?? 0) / drama.totalEpisodes) * 100)
-    : 0;
+  const progressPct =
+    (drama.totalEpisodes ?? 0) > 0
+      ? Math.round(((drama.episodesWatched ?? 0) / drama.totalEpisodes) * 100)
+      : 0;
 
   const Section = ({ title, content }: { title: string; content?: string }) =>
     content ? (
       <div className="glass-card rounded-2xl p-6 space-y-2 animate-fade-in">
         <h3 className="font-display text-lg font-semibold">{title}</h3>
-        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{content}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+          {content}
+        </p>
       </div>
     ) : null;
 
@@ -115,18 +191,37 @@ export default function DramaDetail() {
       <Navbar />
       <main className="container max-w-3xl py-8 space-y-8">
         <div className="flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
             <ArrowLeft size={18} />
             <span className="text-sm font-medium">Back</span>
           </button>
           <div className="flex gap-2">
-            <Link to={`/drama/${drama.id}/edit`} className="p-2 rounded-full hover:bg-secondary transition-colors text-muted-foreground">
+            <Link
+              to={`/drama/${drama.id}/edit`}
+              className="p-2 rounded-full hover:bg-secondary transition-colors text-muted-foreground"
+            >
               <Edit size={20} />
             </Link>
-            <button onClick={toggleFavorite} className="p-2 rounded-full hover:bg-secondary transition-colors">
-              <Heart size={20} className={drama.isFavorite ? "fill-rose text-rose" : "text-muted-foreground"} />
+            <button
+              onClick={toggleFavorite}
+              className="p-2 rounded-full hover:bg-secondary transition-colors"
+            >
+              <Heart
+                size={20}
+                className={
+                  drama.isFavorite
+                    ? "fill-rose text-rose"
+                    : "text-muted-foreground"
+                }
+              />
             </button>
-            <button onClick={handleDelete} className="p-2 rounded-full hover:bg-destructive/10 transition-colors text-destructive">
+            <button
+              onClick={handleDelete}
+              className="p-2 rounded-full hover:bg-destructive/10 transition-colors text-destructive"
+            >
               <Trash2 size={20} />
             </button>
           </div>
@@ -142,7 +237,9 @@ export default function DramaDetail() {
             />
           </div>
           <div className="space-y-3 flex-1">
-            <h1 className="font-display text-3xl sm:text-4xl font-semibold">{drama.title}</h1>
+            <h1 className="font-display text-3xl sm:text-4xl font-semibold">
+              {drama.title}
+            </h1>
             <StarRating rating={drama.rating} readonly size={22} />
 
             {emotionalTags.length > 0 && (
@@ -154,34 +251,47 @@ export default function DramaDetail() {
                 {statusLabel[drama.status]}
               </span>
               {drama.platform && (
-                <span className="px-3 py-1 rounded-full bg-lavender text-accent-foreground">{drama.platform}</span>
+                <span className="px-3 py-1 rounded-full bg-lavender text-accent-foreground">
+                  {drama.platform}
+                </span>
               )}
               {drama.watchedWithGlassimo && (
-                <span className="px-3 py-1 rounded-full bg-gold/20 text-foreground">🥂 With Glassimo</span>
+                <span className="px-3 py-1 rounded-full bg-gold/20 text-foreground">
+                  🥂 With Glassimo
+                </span>
               )}
             </div>
 
             {(drama.totalEpisodes ?? 0) > 0 && (
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground font-medium">
-                  <span>Ep. {drama.episodesWatched ?? 0}/{drama.totalEpisodes}</span>
+                  <span>
+                    Ep. {drama.episodesWatched ?? 0}/{drama.totalEpisodes}
+                  </span>
                   <span>{progressPct}%</span>
                 </div>
                 <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
-                  <div className="bg-primary h-full rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
+                  <div
+                    className="bg-primary h-full rounded-full transition-all duration-500"
+                    style={{ width: `${progressPct}%` }}
+                  />
                 </div>
               </div>
             )}
 
             {drama.actors && (
               <p className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">Cast:</span> {drama.actors}
+                <span className="font-semibold text-foreground">Cast:</span>{" "}
+                {drama.actors}
               </p>
             )}
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {tags.map((tag) => (
-                  <span key={tag} className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-accent text-accent-foreground">
+                  <span
+                    key={tag}
+                    className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-accent text-accent-foreground"
+                  >
                     #{tag}
                   </span>
                 ))}
@@ -197,20 +307,34 @@ export default function DramaDetail() {
           <Section title="💗 What I Loved" content={drama.whatILiked} />
           <Section title="✍️ My Review" content={drama.review} />
           {drama.watchedWithGlassimo && drama.glassimoReview && (
-            <Section title="🥂 Glassimo Review" content={drama.glassimoReview} />
+            <Section
+              title="🥂 Glassimo Review"
+              content={drama.glassimoReview}
+            />
           )}
         </div>
 
         {/* Watching It Images */}
         {watchingImages.length > 0 && (
           <div className="glass-card rounded-2xl p-6 space-y-3 animate-fade-in">
-            <h3 className="font-display text-lg font-semibold">📸 Watching It</h3>
+            <h3 className="font-display text-lg font-semibold">
+              📸 Watching It
+            </h3>
             <div className="grid grid-cols-2 gap-3">
-              {watchingImages.map(img => (
-                <div key={img.id} className="rounded-xl overflow-hidden border border-border">
-                  <img src={img.dataUrl} alt={img.comment || ''} className="w-full aspect-square object-cover" />
+              {watchingImages.map((img) => (
+                <div
+                  key={img.id}
+                  className="rounded-xl overflow-hidden border border-border"
+                >
+                  <img
+                    src={img.dataUrl}
+                    alt={img.comment || ""}
+                    className="w-full aspect-square object-cover"
+                  />
                   {img.comment && (
-                    <p className="p-2 text-xs text-muted-foreground">{img.comment}</p>
+                    <p className="p-2 text-xs text-muted-foreground">
+                      {img.comment}
+                    </p>
                   )}
                 </div>
               ))}
@@ -219,24 +343,48 @@ export default function DramaDetail() {
         )}
 
         {/* Fan Corner - with cast carousel (read-only reactions) */}
-        {(drama.favoriteCharacters || drama.favoriteSongs || drama.secondLeadSyndrome || cast.length > 0) && (
+        {(drama.favoriteCharacters ||
+          drama.favoriteSongs ||
+          drama.secondLeadSyndrome ||
+          cast.length > 0) && (
           <div className="glass-card rounded-2xl p-6 space-y-4 animate-fade-in">
-            <h3 className="font-display text-lg font-semibold">🧸 Fan Corner</h3>
+            <h3 className="font-display text-lg font-semibold">
+              🧸 Fan Corner
+            </h3>
             {drama.watchedWithGlassimo && (
-              <p className="text-sm">🥂 <span className="font-semibold">Watched with Glassimo</span></p>
+              <p className="text-sm">
+                🥂 <span className="font-semibold">Watched with Glassimo</span>
+              </p>
             )}
             {/* Cast carousel - reactions locked (read-only in detail view) */}
             {cast.length > 0 && (
               <CastCarousel cast={cast} onReact={handleActorReact} readOnly />
             )}
-            {drama.favoriteCharacters && <p className="text-sm"><span className="font-semibold">Favorite Characters:</span> {drama.favoriteCharacters}</p>}
-            {drama.favoriteSongs && <p className="text-sm"><span className="font-semibold">🎵 OST:</span> {drama.favoriteSongs}</p>}
-            {drama.secondLeadSyndrome && <p className="text-sm">💔 Had Second Lead Syndrome 😭</p>}
+            {drama.favoriteCharacters && (
+              <p className="text-sm">
+                <span className="font-semibold">Favorite Characters:</span>{" "}
+                {drama.favoriteCharacters}
+              </p>
+            )}
+            {drama.favoriteSongs && (
+              <p className="text-sm">
+                <span className="font-semibold">🎵 OST:</span>{" "}
+                {drama.favoriteSongs}
+              </p>
+            )}
+            {drama.secondLeadSyndrome && (
+              <p className="text-sm">💔 Had Second Lead Syndrome 😭</p>
+            )}
           </div>
         )}
 
         <p className="text-xs text-muted-foreground text-center pt-4">
-          Added on {new Date(drama.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+          Added on{" "}
+          {new Date(drama.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
         </p>
       </main>
     </div>
