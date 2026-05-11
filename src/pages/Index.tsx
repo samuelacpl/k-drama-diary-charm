@@ -1,50 +1,19 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Search, SortAsc, Loader2 } from "lucide-react"; // Aggiunto Loader2
-import { getDramas } from "@/lib/store";
-import { Drama } from "@/lib/types";
+import { Plus, Search, SortAsc } from "lucide-react";
+import { useDramas } from "@/hooks/useDramas";
 import { DramaCard } from "@/components/DramaCard";
 import { Navbar } from "@/components/Navbar";
+import { GridSkeleton } from "@/components/Skeletons";
 
 type SortOption = "rating" | "date" | "favorites";
 
 export default function Index() {
-  // 1. Stato iniziale sempre come array vuoto
-  const [dramas, setDramas] = useState<Drama[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: dramas = [], isLoading } = useDramas();
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortOption>("date");
 
-  // 2. Refresh dei dati asincrono
-  const refresh = useCallback(async () => {
-    console.log("Refresh dati in corso...");
-    try {
-      const data = await getDramas();
-      setDramas(data);
-    } catch (error) {
-      console.error("Errore nel refresh dei drama:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // 3. Effetto per il caricamento iniziale e ascolto eventi
-  useEffect(() => {
-    // Caricamento immediato
-    refresh();
-
-    // Aggiorna quando il CloudSync finisce o altre schede salvano
-    window.addEventListener("storage_updated", refresh);
-
-    return () => {
-      window.removeEventListener("storage_updated", refresh);
-    };
-  }, [refresh]);
-
   const filtered = useMemo(() => {
-    // Sicurezza: se dramas non è ancora un array, restituisci array vuoto
-    if (!Array.isArray(dramas)) return [];
-
     let list = dramas.filter(
       (d) =>
         d.status !== "plan-to-watch" &&
@@ -123,18 +92,12 @@ export default function Index() {
           </div>
         </div>
 
-        {/* 4. Gestione caricamento specifico */}
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="animate-spin text-primary mb-2" size={32} />
-            <p className="text-sm text-muted-foreground">
-              Loading your dramas...
-            </p>
-          </div>
+          <GridSkeleton count={8} />
         ) : filtered.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
             {filtered.map((drama) => (
-              <DramaCard key={drama.id} drama={drama} onUpdate={refresh} />
+              <DramaCard key={drama.id} drama={drama} />
             ))}
           </div>
         ) : (

@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect } from "react"; // Aggiunto useEffect
-import { getDramas } from "@/lib/store";
-import { Drama, ActorInfo } from "@/lib/types";
+import { useState, useMemo } from "react";
+import { useDramas } from "@/hooks/useDramas";
+import { ActorInfo } from "@/lib/types";
 import { Navbar } from "@/components/Navbar";
 import { StarRating } from "@/components/StarRating";
 import { profileUrl } from "@/lib/tmdb";
@@ -20,28 +20,13 @@ interface ActorRank {
 }
 
 export default function Ranking() {
-  // 1. Inizializziamo lo stato vuoto e aggiungiamo il caricamento
-  const [dramas, setDramas] = useState<Drama[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: allDramas = [], isLoading } = useDramas();
+  const dramas = useMemo(
+    () => allDramas.filter((d) => d.status !== "plan-to-watch"),
+    [allDramas],
+  );
   const [tab, setTab] = useState<Tab>("dramas");
   const [filter, setFilter] = useState<DramaFilter>("all");
-
-  // 2. Caricamento dati asincrono
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const allData = await getDramas();
-        // Escludiamo la watchlist dal ranking
-        setDramas(allData.filter((d) => d.status !== "plan-to-watch"));
-      } catch (error) {
-        console.error("Errore nel caricamento ranking:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
-  }, []);
 
   // 3. Calcolo classifica Drama (dipende da 'dramas')
   const ranked = useMemo(() => {

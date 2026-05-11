@@ -1,6 +1,7 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDramas, saveDrama, deleteDrama } from "@/lib/store";
+import { saveDrama, deleteDrama } from "@/lib/store";
+import { useDramas } from "@/hooks/useDramas";
 import { Drama, ActorInfo } from "@/lib/types";
 import { Navbar } from "@/components/Navbar";
 import {
@@ -19,15 +20,11 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export default function Watchlist() {
   const navigate = useNavigate();
-  const [dramas, setDramas] = useState<Drama[]>([]);
-
-  useEffect(() => {
-    const loadData = async () => {
-      const allDramas = await getDramas(); // Assicurati che getDramas sia async nel tuo store
-      setDramas(allDramas.filter((d) => d.status === "plan-to-watch"));
-    };
-    loadData();
-  }, []);
+  const { data: allDramas = [] } = useDramas();
+  const dramas = useMemo(
+    () => allDramas.filter((d) => d.status === "plan-to-watch"),
+    [allDramas],
+  );
   const [selectedDrama, setSelectedDrama] = useState<Drama | null>(null);
 
   // TMDb search
@@ -36,11 +33,6 @@ export default function Watchlist() {
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
-
-  const refresh = async () => {
-    const allDramas = await getDramas();
-    setDramas(allDramas.filter((d) => d.status === "plan-to-watch"));
-  };
 
   const handleSearch = useCallback((q: string) => {
     setQuery(q);
@@ -62,8 +54,7 @@ export default function Watchlist() {
     setQuery("");
     setResults([]);
 
-    const currentDramas = await getDramas();
-    const existing = currentDramas.find((d) => d.tmdbId === result.id);
+    const existing = allDramas.find((d) => d.tmdbId === result.id);
     if (existing) {
       toast.info("This drama is already in your diary!");
       return;
@@ -119,7 +110,6 @@ export default function Watchlist() {
     };
 
     await saveDrama(drama);
-    await refresh();
     toast.success(`"${result.name}" added to Watchlist! 📌`);
   };
 
@@ -130,7 +120,6 @@ export default function Watchlist() {
   const handleRemove = async (e: React.MouseEvent, drama: Drama) => {
     e.stopPropagation();
     await deleteDrama(drama.id);
-    await refresh();
     toast.success(`"${drama.title}" removed from Watchlist`);
   };
 
