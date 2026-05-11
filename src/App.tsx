@@ -4,23 +4,43 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
-import { cloudGetDramas } from "@/lib/cloudStore";
-import Index from "./pages/Index";
-import AddDrama from "./pages/AddDrama";
-import DramaDetail from "./pages/DramaDetail";
-import EditDrama from "./pages/EditDrama";
-import Ranking from "./pages/Ranking";
-import Gallery from "./pages/Gallery";
-import Quotes from "./pages/Quotes";
-import Stats from "./pages/Stats";
-import Actors from "./pages/Actors";
-import ActorDetail from "./pages/ActorDetail";
-import Watchlist from "./pages/Watchlist";
-import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
+import { lazy, Suspense } from "react";
 
-const queryClient = new QueryClient();
+// Eager: la home è la prima vista dopo il login, conviene tenerla nel bundle iniziale
+import Index from "./pages/Index";
+import Auth from "./pages/Auth";
+
+// Lazy: tutto il resto viene caricato on-demand per ridurre il bundle iniziale (mobile-first)
+const AddDrama = lazy(() => import("./pages/AddDrama"));
+const DramaDetail = lazy(() => import("./pages/DramaDetail"));
+const EditDrama = lazy(() => import("./pages/EditDrama"));
+const Ranking = lazy(() => import("./pages/Ranking"));
+const Gallery = lazy(() => import("./pages/Gallery"));
+const Quotes = lazy(() => import("./pages/Quotes"));
+const Stats = lazy(() => import("./pages/Stats"));
+const Actors = lazy(() => import("./pages/Actors"));
+const ActorDetail = lazy(() => import("./pages/ActorDetail"));
+const Watchlist = lazy(() => import("./pages/Watchlist"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+function RouteFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-muted-foreground animate-pulse text-sm">Loading…</p>
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -38,12 +58,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function CloudSync({ children }: { children: React.ReactNode }) {
-  // Ora che usiamo il Cloud-Only, non serve più sincronizzare manualmente qui.
-  // Le singole pagine caricano i dati all'avvio.
-  return <>{children}</>;
-}
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -51,7 +65,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <CloudSync>
+          <Suspense fallback={<RouteFallback />}>
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route
@@ -144,7 +158,7 @@ const App = () => (
               />
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </CloudSync>
+          </Suspense>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
