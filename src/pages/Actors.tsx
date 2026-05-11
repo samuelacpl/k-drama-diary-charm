@@ -1,10 +1,10 @@
-import { useMemo, useState, useEffect } from "react"; // Aggiunto useEffect
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { getDramas } from "@/lib/store";
-import { ActorInfo, Drama } from "@/lib/types"; // Importato Drama
+import { useDramas } from "@/hooks/useDramas";
+import { ActorInfo } from "@/lib/types";
 import { Navbar } from "@/components/Navbar";
 import { profileUrl } from "@/lib/tmdb";
-import { Users, Loader2 } from "lucide-react"; // Aggiunto Loader2
+import { Users, Loader2 } from "lucide-react";
 
 interface ActorAggregate {
   id: number;
@@ -18,27 +18,12 @@ interface ActorAggregate {
 type SortOption = "alpha" | "loved" | "watched";
 
 export default function Actors() {
-  // 1. Stati per i dati e il caricamento
-  const [allDramas, setAllDramas] = useState<Drama[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: dramas = [], isLoading } = useDramas();
   const [sortBy, setSortBy] = useState<SortOption>("alpha");
-
-  // 2. Caricamento asincrono (Cloud-first)
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const data = await getDramas();
-        // Filtriamo qui o nel useMemo, meglio qui per pulizia
-        setAllDramas(data.filter((d) => d.status !== "plan-to-watch"));
-      } catch (error) {
-        console.error("Errore nel caricamento attori:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
-  }, []);
+  const allDramas = useMemo(
+    () => dramas.filter((d) => d.status !== "plan-to-watch"),
+    [dramas],
+  );
 
   // 3. Aggregazione dei dati (ora dipende dallo stato allDramas)
   const actors = useMemo(() => {

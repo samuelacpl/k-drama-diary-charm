@@ -1,35 +1,16 @@
-import { useState, useEffect, useMemo } from "react"; // Aggiunti hooks
-import { getDramas } from "@/lib/store";
-import { Drama } from "@/lib/types"; // Importato tipo Drama
+import { useMemo, useState, useEffect } from "react";
+import { useDramas } from "@/hooks/useDramas";
 import { Navbar } from "@/components/Navbar";
 import { Link } from "react-router-dom";
-import { Quote, Loader2 } from "lucide-react"; // Aggiunto Loader2
+import { Quote, Loader2 } from "lucide-react";
 
 export default function Quotes() {
-  const [dramas, setDramas] = useState<Drama[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // 1. Caricamento dati asincrono (Cloud + Local fallback)
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const data = await getDramas();
-        setDramas(data);
-      } catch (error) {
-        console.error("Errore caricamento quotes:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
-  }, []);
+  const { data: dramas = [], isLoading } = useDramas();
 
   // 2. Elaborazione delle citazioni (si aggiorna quando 'dramas' cambia)
   const allQuotes = useMemo(() => {
     return dramas.flatMap((d) => {
       const quotes = d.favoriteQuotes ?? [];
-      // Supporto per la vecchia citazione singola se l'array è vuoto
       if (quotes.length === 0 && d.favoriteQuote) {
         return [{ text: d.favoriteQuote, dramaId: d.id, dramaTitle: d.title }];
       }
@@ -40,6 +21,24 @@ export default function Quotes() {
       }));
     });
   }, [dramas]);
+
+  // Lazy rendering: rendiamo solo le prime N citazioni e ne aggiungiamo
+  // altre quando l'utente scrolla vicino al fondo (smooth su mobile).
+  const PAGE = 20;
+  const [visible, setVisible] = useState(PAGE);
+  useEffect(() => setVisible(PAGE), [allQuotes.length]);
+  useEffect(() => {
+    const onScroll = () => {
+      if (
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 300
+      ) {
+        setVisible((v) => Math.min(v + PAGE, allQuotes.length));
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [allQuotes.length]);
 
   return (
     <div className="min-h-screen">
@@ -71,11 +70,11 @@ export default function Quotes() {
           </div>
         ) : (
           <div className="space-y-3">
-            {allQuotes.map((q, i) => (
+            {allQuotes.slice(0, visible).map((q, i) => (
               <div
                 key={`${q.dramaId}-${i}`}
                 className="glass-card rounded-2xl p-5 space-y-2 animate-fade-in"
-                style={{ animationDelay: `${i * 30}ms` }}
+                style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}
               >
                 <blockquote className="text-sm italic text-foreground border-l-4 border-primary/30 pl-4">
                   "{q.text}"

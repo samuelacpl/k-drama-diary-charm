@@ -1,31 +1,17 @@
-import { useState, useEffect, useMemo } from "react"; // Aggiunti hooks
-import { getDramas } from "@/lib/store";
-import { ACHIEVEMENTS, Drama } from "@/lib/types"; // Importato Drama
+import { useState, useMemo } from "react";
+import { useDramas } from "@/hooks/useDramas";
+import { ACHIEVEMENTS } from "@/lib/types";
 import { Navbar } from "@/components/Navbar";
 import { Link } from "react-router-dom";
 import { X, Loader2 } from "lucide-react"; // Aggiunto Loader2
 
 export default function Stats() {
-  const [allDramas, setAllDramas] = useState<Drama[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: dramas = [], isLoading } = useDramas();
+  const allDramas = useMemo(
+    () => dramas.filter((d) => d.status !== "plan-to-watch"),
+    [dramas],
+  );
   const [showGlassimo, setShowGlassimo] = useState(false);
-
-  // 1. Caricamento dati asincrono
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const data = await getDramas();
-        // Filtriamo subito per escludere la Watchlist dalle statistiche
-        setAllDramas(data.filter((d) => d.status !== "plan-to-watch"));
-      } catch (error) {
-        console.error("Errore caricamento statistiche:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
-  }, []);
 
   // 2. Calcoli statistici (avvengono solo quando allDramas cambia)
   const stats = useMemo(() => {

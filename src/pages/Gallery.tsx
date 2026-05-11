@@ -1,29 +1,11 @@
-import { useState, useEffect, useMemo } from "react"; // Aggiunti hooks
-import { getDramas } from "@/lib/store";
-import { Drama } from "@/lib/types"; // Importato tipo Drama
+import { useMemo } from "react";
+import { useDramas } from "@/hooks/useDramas";
 import { Navbar } from "@/components/Navbar";
 import { Link } from "react-router-dom";
-import { ImageIcon, Loader2 } from "lucide-react"; // Aggiunto Loader2
+import { ImageIcon, Loader2 } from "lucide-react";
 
 export default function Gallery() {
-  const [dramas, setDramas] = useState<Drama[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // 1. Caricamento dati asincrono
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const data = await getDramas();
-        setDramas(data);
-      } catch (error) {
-        console.error("Errore caricamento gallery:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
-  }, []);
+  const { data: dramas = [], isLoading } = useDramas();
 
   // 2. Estrazione immagini (si aggiorna quando i drama sono caricati)
   const allImages = useMemo(() => {
@@ -77,6 +59,7 @@ export default function Gallery() {
                     alt={img.comment || img.dramaTitle}
                     className="w-full object-cover"
                     loading="lazy"
+                    decoding="async"
                   />
                   <div className="p-3 space-y-1">
                     <p className="text-xs font-semibold text-foreground line-clamp-1">
