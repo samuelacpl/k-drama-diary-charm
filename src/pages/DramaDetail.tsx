@@ -15,6 +15,7 @@ import QuotesSlider from "@/components/QuotesSlider";
 import ActorCard from "@/components/ActorCard";
 import { useEffect, useState } from "react";
 import { Drama, ActorInfo } from "@/lib/types";
+import { useDramas } from "@/hooks/useDramas";
 
 function CastCarousel({
   cast,
@@ -80,6 +81,7 @@ function CastCarousel({
 export default function DramaDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { data: allDramas = [] } = useDramas();
   // inizializziamo a undefined e aggiungiamo stato di caricamennto
   const [drama, setDrama] = useState<Drama | undefined>(undefined);
   const [loading, setLoading] = useState(true);
@@ -175,6 +177,19 @@ export default function DramaDetail() {
     (drama.totalEpisodes ?? 0) > 0
       ? Math.round(((drama.episodesWatched ?? 0) / drama.totalEpisodes) * 100)
       : 0;
+
+  // Milestone: dramas at positions 50, 100, 150... (excl. plan-to-watch, sorted by createdAt asc)
+  const milestone = (() => {
+    const visible = allDramas.filter((d) => d.status !== "plan-to-watch");
+    const asc = [...visible].sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+    const idx = asc.findIndex((d) => d.id === drama.id);
+    if (idx === -1) return 0;
+    const pos = idx + 1;
+    return pos % 50 === 0 ? pos : 0;
+  })();
 
   const Section = ({ title, content }: { title: string; content?: string }) =>
     content ? (
