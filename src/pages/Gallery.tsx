@@ -69,13 +69,20 @@ export default function Gallery() {
                 className="block break-inside-avoid group"
               >
                 <div className="rounded-2xl overflow-hidden border border-border bg-card shadow-sm hover:shadow-md transition-shadow">
-                  <img
-                    src={img.dataUrl}
-                    alt={img.comment || img.dramaTitle}
-                    className="w-full object-cover"
-                    loading="lazy"
-                    decoding="async"
-                  />
+                  <div className="relative">
+                    <img
+                      src={img.dataUrl}
+                      alt={img.comment || img.dramaTitle}
+                      className="w-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    {img.createdAt && (
+                      <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-cream/90 text-foreground text-[10px] font-semibold shadow-sm backdrop-blur-sm">
+                        {formatDate(img.createdAt)}
+                      </span>
+                    )}
+                  </div>
                   <div className="p-3 space-y-1">
                     <p className="text-xs font-semibold text-foreground line-clamp-1">
                       {img.dramaTitle}
@@ -83,11 +90,6 @@ export default function Gallery() {
                     {img.comment && (
                       <p className="text-xs text-muted-foreground line-clamp-2">
                         {img.comment}
-                      </p>
-                    )}
-                    {img.createdAt && (
-                      <p className="text-[10px] text-muted-foreground/70">
-                        {formatDate(img.createdAt)}
                       </p>
                     )}
                   </div>
