@@ -25,7 +25,7 @@ export default function ActorCard({ actor, onReact, showReaction = true }: Actor
         <p className="text-xs font-semibold text-foreground line-clamp-1">{actor.name}</p>
         <p className="text-[10px] text-muted-foreground line-clamp-1">{actor.character}</p>
       </div>
-      {showReaction && onReact && (
+      {showReaction && onReact ? (
         <div className="flex gap-1">
           <button
             onClick={() => onReact('loved')}
@@ -44,6 +44,19 @@ export default function ActorCard({ actor, onReact, showReaction = true }: Actor
             💀
           </button>
         </div>
+      ) : (
+        actor.reaction && (
+          <div className="flex justify-center">
+            <span
+              className={`text-sm px-2 py-0.5 rounded-full ${
+                actor.reaction === 'loved' ? 'bg-rose/20' : 'bg-muted'
+              }`}
+              title={actor.reaction === 'loved' ? 'Loved' : 'Hated'}
+            >
+              {actor.reaction === 'loved' ? '❤️' : '💀'}
+            </span>
+          </div>
+        )
       )}
     </div>
   );
