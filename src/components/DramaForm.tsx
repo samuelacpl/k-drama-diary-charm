@@ -431,7 +431,14 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
         <div className="grid grid-cols-2 gap-3">
           {watchingImages.map(img => (
             <div key={img.id} className="relative rounded-xl border border-border overflow-hidden bg-card group">
-              <img src={img.dataUrl} alt="" className="w-full aspect-square object-cover" />
+              <div className="relative">
+                <img src={img.dataUrl} alt="" className="w-full aspect-square object-cover" />
+                {img.createdAt && (
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-cream/90 text-foreground text-[10px] font-semibold shadow-sm backdrop-blur-sm">
+                    {new Date(img.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                )}
+              </div>
               <button type="button" onClick={() => removeWatchingImage(img.id)} className="absolute top-1 right-1 p-1 rounded-full bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity">
                 <X size={14} className="text-destructive" />
               </button>
