@@ -127,6 +127,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
   // Debounced TMDb search
   const handleTmdbSearch = useCallback((query: string) => {
     setTmdbQuery(query);
+    setDuplicateWarning(null);
     if (tmdbTimerRef.current) clearTimeout(tmdbTimerRef.current);
     if (!query.trim()) { setTmdbResults([]); return; }
     tmdbTimerRef.current = setTimeout(async () => {
