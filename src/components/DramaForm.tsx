@@ -275,6 +275,11 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
             )}
           </div>
           <p className="text-xs text-muted-foreground">Search to auto-fill title, poster, episodes, cast & genres</p>
+          {duplicateWarning && (
+            <div className="rounded-xl border border-rose/40 bg-rose/10 px-3 py-2 text-xs font-semibold text-foreground animate-fade-in">
+              ⚠️ {duplicateWarning}
+            </div>
+          )}
         </div>
       )}
 
