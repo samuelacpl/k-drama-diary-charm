@@ -20,10 +20,8 @@ export default function Stats() {
       (s, d) => s + (d.episodesWatched || 0),
       0,
     );
-    // Average rating excludes "watching" (only completed + dropped count)
-    const ratedDramas = allDramas.filter(
-      (d) => d.status === "completed" || d.status === "dropped",
-    );
+    // Average rating: only Completed dramas count
+    const ratedDramas = allDramas.filter((d) => d.status === "completed");
     const avgRating = ratedDramas.length
       ? (
           ratedDramas.reduce((s, d) => s + d.rating, 0) / ratedDramas.length
