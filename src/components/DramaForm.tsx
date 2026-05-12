@@ -439,7 +439,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
                   </span>
                 )}
               </div>
-              <button type="button" onClick={() => removeWatchingImage(img.id)} className="absolute top-1 right-1 p-1 rounded-full bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button type="button" onClick={() => removeWatchingImage(img.id)} className="absolute top-1 left-1 p-1 rounded-full bg-background/80 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                 <X size={14} className="text-destructive" />
               </button>
               <div className="p-2">
