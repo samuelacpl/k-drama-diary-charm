@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Drama, DramaStatus, WatchingImage, ActorInfo, PLATFORMS, GENRE_TAGS, STATUS_OPTIONS } from '@/lib/types';
 import { searchDramas, getDramaDetails, getDramaCast, posterUrl, profileUrl, hasTmdbKey, TmdbSearchResult } from '@/lib/tmdb';
+import { getDramas } from '@/lib/store';
 import { StarRating } from './StarRating';
 import EmotionalBadges from './EmotionalBadges';
 import EpisodeStepper from './EpisodeStepper';
@@ -103,6 +104,12 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
   const [glassimoReview, setGlassimoReview] = useState(initial?.glassimoReview ?? '');
   const [tmdbId, setTmdbId] = useState<number | undefined>(initial?.tmdbId);
   const [cast, setCast] = useState<ActorInfo[]>(initial?.cast ?? []);
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  const [existingDramas, setExistingDramas] = useState<Drama[]>([]);
+
+  useEffect(() => {
+    getDramas().then(setExistingDramas).catch(() => {});
+  }, []);
 
   // TMDb search state
   const [tmdbQuery, setTmdbQuery] = useState('');
@@ -134,6 +141,18 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
     setShowTmdb(false);
     setTmdbQuery('');
     setTmdbResults([]);
+    // Duplicate check (skip if editing the same drama)
+    const isDup = existingDramas.some(
+      (d) =>
+        d.id !== initial?.id &&
+        (d.tmdbId === result.id ||
+          d.title.trim().toLowerCase() === result.name.trim().toLowerCase()),
+    );
+    if (isDup) {
+      setDuplicateWarning('Hai già aggiunto questo drama');
+    } else {
+      setDuplicateWarning(null);
+    }
     setTitle(result.name);
     setTmdbId(result.id);
     if (result.poster_path) setCoverImage(posterUrl(result.poster_path, 'w500'));
