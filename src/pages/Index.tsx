@@ -29,13 +29,6 @@ export default function Index() {
   }, [dramas]);
 
   const filtered = useMemo(() => {
-    const statusOrder: Record<string, number> = {
-      watching: 0,
-      completed: 1,
-      dropped: 2,
-      "plan-to-watch": 3,
-    };
-
     let list = dramas.filter(
       (d) =>
         d.status !== "plan-to-watch" &&
@@ -60,8 +53,10 @@ export default function Index() {
     };
 
     list.sort((a, b) => {
-      const s = statusOrder[a.status] - statusOrder[b.status];
-      if (s !== 0) return s;
+      // Watching always first; Completed + Dropped share the same bucket
+      const wa = a.status === "watching" ? 0 : 1;
+      const wb = b.status === "watching" ? 0 : 1;
+      if (wa !== wb) return wa - wb;
       return secondary(a, b);
     });
     return list;

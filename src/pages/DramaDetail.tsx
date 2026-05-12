@@ -15,6 +15,7 @@ import QuotesSlider from "@/components/QuotesSlider";
 import ActorCard from "@/components/ActorCard";
 import { useEffect, useState } from "react";
 import { Drama, ActorInfo } from "@/lib/types";
+import { useDramas } from "@/hooks/useDramas";
 
 function CastCarousel({
   cast,
@@ -80,6 +81,7 @@ function CastCarousel({
 export default function DramaDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { data: allDramas = [] } = useDramas();
   // inizializziamo a undefined e aggiungiamo stato di caricamennto
   const [drama, setDrama] = useState<Drama | undefined>(undefined);
   const [loading, setLoading] = useState(true);
@@ -175,6 +177,19 @@ export default function DramaDetail() {
     (drama.totalEpisodes ?? 0) > 0
       ? Math.round(((drama.episodesWatched ?? 0) / drama.totalEpisodes) * 100)
       : 0;
+
+  // Milestone: dramas at positions 50, 100, 150... (excl. plan-to-watch, sorted by createdAt asc)
+  const milestone = (() => {
+    const visible = allDramas.filter((d) => d.status !== "plan-to-watch");
+    const asc = [...visible].sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+    const idx = asc.findIndex((d) => d.id === drama.id);
+    if (idx === -1) return 0;
+    const pos = idx + 1;
+    return pos % 50 === 0 ? pos : 0;
+  })();
 
   const Section = ({ title, content }: { title: string; content?: string }) =>
     content ? (
@@ -326,23 +341,25 @@ export default function DramaDetail() {
                   key={img.id}
                   className="rounded-xl overflow-hidden border border-border"
                 >
-                  <img
-                    src={img.dataUrl}
-                    alt={img.comment || ""}
-                    className="w-full aspect-square object-cover"
-                  />
+                  <div className="relative">
+                    <img
+                      src={img.dataUrl}
+                      alt={img.comment || ""}
+                      className="w-full aspect-square object-cover"
+                    />
+                    {img.createdAt && (
+                      <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-cream/90 text-foreground text-[10px] font-semibold shadow-sm backdrop-blur-sm">
+                        {new Date(img.createdAt).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+                    )}
+                  </div>
                   {img.comment && (
                     <p className="p-2 text-xs text-muted-foreground">
                       {img.comment}
-                    </p>
-                  )}
-                  {img.createdAt && (
-                    <p className="px-2 pb-2 text-[10px] text-muted-foreground/70">
-                      {new Date(img.createdAt).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
                     </p>
                   )}
                 </div>
@@ -357,9 +374,17 @@ export default function DramaDetail() {
           drama.secondLeadSyndrome ||
           cast.length > 0) && (
           <div className="glass-card rounded-2xl p-6 space-y-4 animate-fade-in">
-            <h3 className="font-display text-lg font-semibold">
-              🧸 Fan Corner
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-display text-lg font-semibold">
+                🧸 Fan Corner
+              </h3>
+              {milestone > 0 && (
+                <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-gold text-foreground text-xs font-extrabold shadow-sm">
+                  <span className="text-sm leading-none">⭐</span>
+                  <span>Milestone {milestone}</span>
+                </span>
+              )}
+            </div>
             {drama.watchedWithGlassimo && (
               <p className="text-sm">
                 🥂 <span className="font-semibold">Watched with Glassimo</span>

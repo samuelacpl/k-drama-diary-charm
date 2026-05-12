@@ -62,9 +62,9 @@ export function DramaCard({ drama: rawDrama, onUpdate, milestone }: DramaCardPro
             </span>
           </div>
           {milestone && (
-            <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 rounded-full bg-gold/90 text-foreground shadow-md backdrop-blur-sm">
-              <span className="text-xs">⭐</span>
-              <span className="text-[10px] font-bold">{milestone}</span>
+            <div className="absolute top-3 left-3 flex items-center gap-1 px-3 py-1.5 rounded-full bg-gold text-foreground shadow-lg ring-2 ring-background/70 backdrop-blur-sm">
+              <span className="text-base leading-none">⭐</span>
+              <span className="text-sm font-extrabold leading-none">{milestone}</span>
             </div>
           )}
         </div>

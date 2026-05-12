@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Drama, DramaStatus, WatchingImage, ActorInfo, PLATFORMS, GENRE_TAGS, STATUS_OPTIONS } from '@/lib/types';
 import { searchDramas, getDramaDetails, getDramaCast, posterUrl, profileUrl, hasTmdbKey, TmdbSearchResult } from '@/lib/tmdb';
+import { getDramas } from '@/lib/store';
 import { StarRating } from './StarRating';
 import EmotionalBadges from './EmotionalBadges';
 import EpisodeStepper from './EpisodeStepper';
@@ -103,6 +104,12 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
   const [glassimoReview, setGlassimoReview] = useState(initial?.glassimoReview ?? '');
   const [tmdbId, setTmdbId] = useState<number | undefined>(initial?.tmdbId);
   const [cast, setCast] = useState<ActorInfo[]>(initial?.cast ?? []);
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  const [existingDramas, setExistingDramas] = useState<Drama[]>([]);
+
+  useEffect(() => {
+    getDramas().then(setExistingDramas).catch(() => {});
+  }, []);
 
   // TMDb search state
   const [tmdbQuery, setTmdbQuery] = useState('');
@@ -120,6 +127,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
   // Debounced TMDb search
   const handleTmdbSearch = useCallback((query: string) => {
     setTmdbQuery(query);
+    setDuplicateWarning(null);
     if (tmdbTimerRef.current) clearTimeout(tmdbTimerRef.current);
     if (!query.trim()) { setTmdbResults([]); return; }
     tmdbTimerRef.current = setTimeout(async () => {
@@ -134,6 +142,18 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
     setShowTmdb(false);
     setTmdbQuery('');
     setTmdbResults([]);
+    // Duplicate check (skip if editing the same drama)
+    const isDup = existingDramas.some(
+      (d) =>
+        d.id !== initial?.id &&
+        (d.tmdbId === result.id ||
+          d.title.trim().toLowerCase() === result.name.trim().toLowerCase()),
+    );
+    if (isDup) {
+      setDuplicateWarning('Hai già aggiunto questo drama');
+    } else {
+      setDuplicateWarning(null);
+    }
     setTitle(result.name);
     setTmdbId(result.id);
     if (result.poster_path) setCoverImage(posterUrl(result.poster_path, 'w500'));
@@ -255,6 +275,11 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
             )}
           </div>
           <p className="text-xs text-muted-foreground">Search to auto-fill title, poster, episodes, cast & genres</p>
+          {duplicateWarning && (
+            <div className="rounded-xl border border-rose/40 bg-rose/10 px-3 py-2 text-xs font-semibold text-foreground animate-fade-in">
+              ⚠️ {duplicateWarning}
+            </div>
+          )}
         </div>
       )}
 
@@ -406,8 +431,15 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
         <div className="grid grid-cols-2 gap-3">
           {watchingImages.map(img => (
             <div key={img.id} className="relative rounded-xl border border-border overflow-hidden bg-card group">
-              <img src={img.dataUrl} alt="" className="w-full aspect-square object-cover" />
-              <button type="button" onClick={() => removeWatchingImage(img.id)} className="absolute top-1 right-1 p-1 rounded-full bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="relative">
+                <img src={img.dataUrl} alt="" className="w-full aspect-square object-cover" />
+                {img.createdAt && (
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-cream/90 text-foreground text-[10px] font-semibold shadow-sm backdrop-blur-sm">
+                    {new Date(img.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                )}
+              </div>
+              <button type="button" onClick={() => removeWatchingImage(img.id)} className="absolute top-1 left-1 p-1 rounded-full bg-background/80 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                 <X size={14} className="text-destructive" />
               </button>
               <div className="p-2">
