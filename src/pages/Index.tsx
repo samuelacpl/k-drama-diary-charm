@@ -13,7 +13,29 @@ export default function Index() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortOption>("date");
 
+  // Milestone map: dramas at positions 50, 100, 150... (sorted by createdAt asc)
+  const milestoneMap = useMemo(() => {
+    const m = new Map<string, number>();
+    const visible = dramas.filter((d) => d.status !== "plan-to-watch");
+    const asc = [...visible].sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+    asc.forEach((d, i) => {
+      const pos = i + 1;
+      if (pos % 50 === 0) m.set(d.id, pos);
+    });
+    return m;
+  }, [dramas]);
+
   const filtered = useMemo(() => {
+    const statusOrder: Record<string, number> = {
+      watching: 0,
+      completed: 1,
+      dropped: 2,
+      "plan-to-watch": 3,
+    };
+
     let list = dramas.filter(
       (d) =>
         d.status !== "plan-to-watch" &&
@@ -23,20 +45,25 @@ export default function Index() {
           )),
     );
 
-    switch (sort) {
-      case "rating":
-        list.sort((a, b) => b.rating - a.rating);
-        break;
-      case "favorites":
-        list.sort((a, b) => (b.isFavorite ? 1 : 0) - (a.isFavorite ? 1 : 0));
-        break;
-      case "date":
-      default:
-        list.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        );
-    }
+    const secondary = (a: typeof list[0], b: typeof list[0]) => {
+      switch (sort) {
+        case "rating":
+          return b.rating - a.rating;
+        case "favorites":
+          return (b.isFavorite ? 1 : 0) - (a.isFavorite ? 1 : 0);
+        case "date":
+        default:
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+      }
+    };
+
+    list.sort((a, b) => {
+      const s = statusOrder[a.status] - statusOrder[b.status];
+      if (s !== 0) return s;
+      return secondary(a, b);
+    });
     return list;
   }, [dramas, search, sort]);
 
@@ -97,7 +124,11 @@ export default function Index() {
         ) : filtered.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
             {filtered.map((drama) => (
-              <DramaCard key={drama.id} drama={drama} />
+              <DramaCard
+                key={drama.id}
+                drama={drama}
+                milestone={milestoneMap.get(drama.id)}
+              />
             ))}
           </div>
         ) : (

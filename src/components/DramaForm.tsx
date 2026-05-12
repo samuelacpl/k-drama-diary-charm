@@ -185,7 +185,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
       if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name} is too large (max 5MB)`); continue; }
       try {
         const dataUrl = await fileToDataUrl(file);
-        setWatchingImages(prev => [...prev, { id: crypto.randomUUID(), dataUrl, comment: '' }]);
+        setWatchingImages(prev => [...prev, { id: crypto.randomUUID(), dataUrl, comment: '', createdAt: new Date().toISOString() }]);
       } catch {
         toast.error(`Failed to load ${file.name}`);
       }

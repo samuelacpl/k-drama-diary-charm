@@ -4,6 +4,7 @@ export interface WatchingImage {
   id: string;
   dataUrl: string;
   comment: string;
+  createdAt?: string;
 }
 
 export interface ActorInfo {
@@ -43,7 +44,7 @@ export interface Drama {
   cast: ActorInfo[];
 }
 
-export const PLATFORMS = ['Netflix', 'Viki', 'Disney+', 'StreamingCommunity', 'RamaOriental', 'Other'];
+export const PLATFORMS = ['Netflix', 'Viki', 'Disney+', 'Amazon Prime Video', 'StreamingCommunity', 'RamaOriental', 'Other'];
 
 export const GENRE_TAGS = [
   'Romance', 'Historical', 'Thriller', 'Comedy', 'Melodrama',

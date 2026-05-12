@@ -9,14 +9,29 @@ export default function Gallery() {
 
   // 2. Estrazione immagini (si aggiorna quando i drama sono caricati)
   const allImages = useMemo(() => {
-    return dramas.flatMap((d) =>
+    const list = dramas.flatMap((d) =>
       (d.watchingImages ?? []).map((img) => ({
         ...img,
         dramaId: d.id,
         dramaTitle: d.title,
       })),
     );
+    // Latest first when date available
+    return list.sort((a, b) => {
+      const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return tb - ta;
+    });
   }, [dramas]);
+
+  const formatDate = (iso?: string) =>
+    iso
+      ? new Date(iso).toLocaleDateString("en-GB", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : "";
 
   return (
     <div className="min-h-screen">
@@ -68,6 +83,11 @@ export default function Gallery() {
                     {img.comment && (
                       <p className="text-xs text-muted-foreground line-clamp-2">
                         {img.comment}
+                      </p>
+                    )}
+                    {img.createdAt && (
+                      <p className="text-[10px] text-muted-foreground/70">
+                        {formatDate(img.createdAt)}
                       </p>
                     )}
                   </div>

@@ -9,9 +9,10 @@ import EpisodeProgress from "@/components/EpisodeProgress";
 interface DramaCardProps {
   drama: Drama;
   onUpdate?: () => void;
+  milestone?: number;
 }
 
-export function DramaCard({ drama: rawDrama, onUpdate }: DramaCardProps) {
+export function DramaCard({ drama: rawDrama, onUpdate, milestone }: DramaCardProps) {
   // Safe defaults for legacy data missing new fields
   const drama = {
     ...rawDrama,
@@ -60,6 +61,12 @@ export function DramaCard({ drama: rawDrama, onUpdate }: DramaCardProps) {
               {drama.status.replace('-', ' ')}
             </span>
           </div>
+          {milestone && (
+            <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 rounded-full bg-gold/90 text-foreground shadow-md backdrop-blur-sm">
+              <span className="text-xs">⭐</span>
+              <span className="text-[10px] font-bold">{milestone}</span>
+            </div>
+          )}
         </div>
 
         <div className="p-4 space-y-3">

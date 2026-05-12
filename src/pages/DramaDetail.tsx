@@ -336,6 +336,15 @@ export default function DramaDetail() {
                       {img.comment}
                     </p>
                   )}
+                  {img.createdAt && (
+                    <p className="px-2 pb-2 text-[10px] text-muted-foreground/70">
+                      {new Date(img.createdAt).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

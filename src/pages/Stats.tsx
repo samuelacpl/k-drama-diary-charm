@@ -20,9 +20,13 @@ export default function Stats() {
       (s, d) => s + (d.episodesWatched || 0),
       0,
     );
-    const avgRating = allDramas.length
+    // Average rating excludes "watching" (only completed + dropped count)
+    const ratedDramas = allDramas.filter(
+      (d) => d.status === "completed" || d.status === "dropped",
+    );
+    const avgRating = ratedDramas.length
       ? (
-          allDramas.reduce((s, d) => s + d.rating, 0) / allDramas.length
+          ratedDramas.reduce((s, d) => s + d.rating, 0) / ratedDramas.length
         ).toFixed(1)
       : "0";
     const watchHours = Math.round(totalEps * 1.1);
