@@ -341,23 +341,25 @@ export default function DramaDetail() {
                   key={img.id}
                   className="rounded-xl overflow-hidden border border-border"
                 >
-                  <img
-                    src={img.dataUrl}
-                    alt={img.comment || ""}
-                    className="w-full aspect-square object-cover"
-                  />
+                  <div className="relative">
+                    <img
+                      src={img.dataUrl}
+                      alt={img.comment || ""}
+                      className="w-full aspect-square object-cover"
+                    />
+                    {img.createdAt && (
+                      <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-cream/90 text-foreground text-[10px] font-semibold shadow-sm backdrop-blur-sm">
+                        {new Date(img.createdAt).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+                    )}
+                  </div>
                   {img.comment && (
                     <p className="p-2 text-xs text-muted-foreground">
                       {img.comment}
-                    </p>
-                  )}
-                  {img.createdAt && (
-                    <p className="px-2 pb-2 text-[10px] text-muted-foreground/70">
-                      {new Date(img.createdAt).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
                     </p>
                   )}
                 </div>
@@ -372,9 +374,17 @@ export default function DramaDetail() {
           drama.secondLeadSyndrome ||
           cast.length > 0) && (
           <div className="glass-card rounded-2xl p-6 space-y-4 animate-fade-in">
-            <h3 className="font-display text-lg font-semibold">
-              🧸 Fan Corner
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-display text-lg font-semibold">
+                🧸 Fan Corner
+              </h3>
+              {milestone > 0 && (
+                <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-gold text-foreground text-xs font-extrabold shadow-sm">
+                  <span className="text-sm leading-none">⭐</span>
+                  <span>Milestone {milestone}</span>
+                </span>
+              )}
+            </div>
             {drama.watchedWithGlassimo && (
               <p className="text-sm">
                 🥂 <span className="font-semibold">Watched with Glassimo</span>
