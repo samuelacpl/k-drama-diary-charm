@@ -1,17 +1,28 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useDramas } from "@/hooks/useDramas";
 import { Navbar } from "@/components/Navbar";
 import { Link } from "react-router-dom";
-import { ImageIcon, Loader2 } from "lucide-react";
+import { ImageIcon, Loader2, X } from "lucide-react";
+
+type GalleryImage = {
+  id: string;
+  dataUrl: string;
+  comment: string;
+  createdAt?: string;
+  dramaId: string;
+  dramaTitle: string;
+};
 
 export default function Gallery() {
   const { data: dramas = [], isLoading } = useDramas();
+  const [selected, setSelected] = useState<GalleryImage | null>(null);
 
   // 2. Estrazione immagini (si aggiorna quando i drama sono caricati)
-  const allImages = useMemo(() => {
+  const allImages = useMemo<GalleryImage[]>(() => {
     const list = dramas.flatMap((d) =>
       (d.watchingImages ?? []).map((img) => ({
         ...img,
+        comment: img.comment ?? "",
         dramaId: d.id,
         dramaTitle: d.title,
       })),
@@ -63,10 +74,10 @@ export default function Gallery() {
         ) : (
           <div className="columns-2 sm:columns-3 gap-3 space-y-3">
             {allImages.map((img) => (
-              <Link
+              <button
                 key={img.id}
-                to={`/drama/${img.dramaId}`}
-                className="block break-inside-avoid group"
+                onClick={() => setSelected(img)}
+                className="block w-full text-left break-inside-avoid group"
               >
                 <div className="rounded-2xl overflow-hidden border border-border bg-card shadow-sm hover:shadow-md transition-shadow">
                   <div className="relative">
@@ -94,8 +105,51 @@ export default function Gallery() {
                     )}
                   </div>
                 </div>
-              </Link>
+              </button>
             ))}
+          </div>
+        )}
+
+        {selected && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in"
+            onClick={() => setSelected(null)}
+          >
+            <div
+              className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto rounded-3xl border border-border bg-card shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setSelected(null)}
+                className="absolute top-3 right-3 z-10 p-2 rounded-full bg-background/90 hover:bg-background shadow-md transition-colors"
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+              <img
+                src={selected.dataUrl}
+                alt={selected.comment || selected.dramaTitle}
+                className="w-full max-h-[60vh] object-contain bg-muted"
+              />
+              <div className="p-5 space-y-2">
+                <Link
+                  to={`/drama/${selected.dramaId}`}
+                  className="font-display text-lg font-bold text-foreground hover:text-primary transition-colors"
+                >
+                  📺 {selected.dramaTitle}
+                </Link>
+                {selected.createdAt && (
+                  <p className="text-xs text-muted-foreground">
+                    {formatDate(selected.createdAt)}
+                  </p>
+                )}
+                {selected.comment && (
+                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed pt-2 border-t border-border">
+                    {selected.comment}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
