@@ -110,4 +110,13 @@
   .glass-card {
     @apply bg-card/80 backdrop-blur-md border border-border/50 shadow-sm;
   }
+
+  @keyframes sparkle-pop {
+    0%   { opacity: 0; transform: scale(0.4) rotate(0deg); }
+    40%  { opacity: 1; transform: scale(1.2) rotate(15deg); }
+    100% { opacity: 0; transform: scale(0.6) rotate(-10deg); }
+  }
+  .sparkle-1 { animation: sparkle-pop 1.6s ease-out 0.05s 1 both; }
+  .sparkle-2 { animation: sparkle-pop 1.6s ease-out 0.35s 1 both; }
+  .sparkle-3 { animation: sparkle-pop 1.6s ease-out 0.65s 1 both; }
 }

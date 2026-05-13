@@ -16,6 +16,7 @@ import ActorCard from "@/components/ActorCard";
 import { useEffect, useState } from "react";
 import { Drama, ActorInfo } from "@/lib/types";
 import { useDramas } from "@/hooks/useDramas";
+import { Music } from "lucide-react";
 
 function CastCarousel({
   cast,
@@ -379,9 +380,12 @@ export default function DramaDetail() {
                 🧸 Fan Corner
               </h3>
               {milestone > 0 && (
-                <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-gold text-foreground text-xs font-extrabold shadow-sm">
+                <span className="relative flex items-center gap-1 px-3 py-1 rounded-full bg-blush text-foreground text-xs font-extrabold shadow-sm">
                   <span className="text-sm leading-none">⭐</span>
                   <span>Milestone {milestone}</span>
+                  <span className="pointer-events-none absolute -top-2 -left-2 text-sm sparkle-1">✨</span>
+                  <span className="pointer-events-none absolute -top-1 -right-3 text-xs sparkle-2">✨</span>
+                  <span className="pointer-events-none absolute -bottom-2 left-2 text-xs sparkle-3">✨</span>
                 </span>
               )}
             </div>
@@ -405,6 +409,35 @@ export default function DramaDetail() {
                 <span className="font-semibold">🎵 OST:</span>{" "}
                 {drama.favoriteSongs}
               </p>
+            )}
+            {(drama.osts ?? []).length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">🎵 OSTs</p>
+                <div className="space-y-2">
+                  {(drama.osts ?? []).map((t) => {
+                    const card = (
+                      <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-2 pr-3">
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted shrink-0">
+                          {t.cover ? (
+                            <img src={t.cover} alt="" className="w-full h-full object-cover" loading="lazy" />
+                          ) : (
+                            <Music size={18} className="m-auto text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground line-clamp-1">{t.name}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{t.artist}</p>
+                        </div>
+                      </div>
+                    );
+                    return t.url ? (
+                      <a key={t.id} href={t.url} target="_blank" rel="noopener noreferrer" className="block hover:opacity-90 transition-opacity">{card}</a>
+                    ) : (
+                      <div key={t.id}>{card}</div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
             {drama.secondLeadSyndrome && (
               <p className="text-sm">💔 Had Second Lead Syndrome 😭</p>

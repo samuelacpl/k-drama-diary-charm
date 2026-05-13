@@ -9,6 +9,8 @@ import EmotionalBadges from './EmotionalBadges';
 import EpisodeStepper from './EpisodeStepper';
 import { toast } from 'sonner';
 import { Upload, X, Plus, Search } from 'lucide-react';
+import SpotifySearch from './SpotifySearch';
+import { SpotifyTrack } from '@/lib/types';
 
 interface DramaFormProps {
   initial?: Drama;
@@ -98,6 +100,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
   const [emotionalTags, setEmotionalTags] = useState<string[]>(initial?.emotionalTags ?? []);
   const [favoriteCharacters, setFavoriteCharacters] = useState(initial?.favoriteCharacters ?? '');
   const [favoriteSongs, setFavoriteSongs] = useState(initial?.favoriteSongs ?? '');
+  const [osts, setOsts] = useState<SpotifyTrack[]>(initial?.osts ?? []);
   const [secondLeadSyndrome, setSecondLeadSyndrome] = useState(initial?.secondLeadSyndrome ?? false);
   const [watchingImages, setWatchingImages] = useState<WatchingImage[]>(initial?.watchingImages ?? []);
   const [watchedWithGlassimo, setWatchedWithGlassimo] = useState(initial?.watchedWithGlassimo ?? false);
@@ -234,7 +237,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
       favoriteCharacters, favoriteSongs, secondLeadSyndrome,
       isFavorite: initial?.isFavorite ?? false,
       watchingImages, watchedWithGlassimo, glassimoReview,
-      tmdbId, cast,
+      tmdbId, cast, osts,
     });
   };
 
@@ -490,7 +493,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
         </div>
         <div className="space-y-1">
           <label className={labelClass}>🎵 Favorite OST Songs</label>
-          <input value={favoriteSongs} onChange={e => setFavoriteSongs(e.target.value)} placeholder="Songs you can't stop listening to..." className={inputClass} />
+          <SpotifySearch tracks={osts} onChange={setOsts} />
         </div>
         <div className="flex items-center gap-3">
           <label className={labelClass}>Second Lead Syndrome?</label>
