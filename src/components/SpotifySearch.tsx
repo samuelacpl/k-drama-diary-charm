@@ -24,32 +24,21 @@ export default function SpotifySearch({ tracks, onChange }: Props) {
     timer.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase.functions.invoke('spotify-search', {
-          method: 'GET' as any,
-          body: undefined,
-          // pass via query string by appending to URL — supabase-js doesn't support search params for GET, so use POST-style with body
-        } as any);
-        // Fallback: call via fetch with query string
-        if (error || !data) throw error;
-        setResults(data.tracks ?? []);
-      } catch {
-        // Fallback fetch with query string
-        try {
-          const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/spotify-search?q=${encodeURIComponent(q)}`;
-          const session = (await supabase.auth.getSession()).data.session;
-          const res = await fetch(url, {
-            headers: {
-              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-          });
-          const json = await res.json();
-          if (!res.ok) throw new Error(json.error || 'Spotify error');
-          setResults(json.tracks ?? []);
-        } catch (err: any) {
-          toast.error(err?.message || 'Spotify search failed');
-          setResults([]);
-        }
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/spotify-search?q=${encodeURIComponent(q)}`;
+        const session = (await supabase.auth.getSession()).data.session;
+        const apiKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const res = await fetch(url, {
+          headers: {
+            apikey: apiKey,
+            Authorization: `Bearer ${session?.access_token ?? apiKey}`,
+          },
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Spotify error');
+        setResults(json.tracks ?? []);
+      } catch (err: any) {
+        toast.error(err?.message || 'Spotify search failed');
+        setResults([]);
       } finally {
         setLoading(false);
       }
