@@ -18,6 +18,8 @@ export interface TmdbSearchResult {
   overview: string;
   genre_ids: number[];
   number_of_seasons?: number;
+  original_language?: string;
+  origin_country?: string[];
 }
 
 export interface TmdbDetail {
@@ -55,7 +57,11 @@ export async function searchDramas(query: string): Promise<TmdbSearchResult[]> {
     const res = await fetch(`${BASE}/search/tv?api_key=${API_KEY}&query=${encodeURIComponent(query)}&language=en-US&page=1`);
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.results ?? []).slice(0, 8);
+    // Filter: Korean content only (original_language === 'ko' OR origin_country includes 'KR')
+    const filtered = (data.results ?? []).filter((r: TmdbSearchResult) =>
+      r.original_language === 'ko' || (r.origin_country ?? []).includes('KR'),
+    );
+    return filtered.slice(0, 8);
   } catch {
     return [];
   }
