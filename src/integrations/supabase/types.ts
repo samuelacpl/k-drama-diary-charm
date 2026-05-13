@@ -29,6 +29,7 @@ export type Database = {
           glassimo_review: string | null
           id: string
           is_favorite: boolean | null
+          osts: Json
           platform: string | null
           plot: string | null
           rating: number | null
@@ -59,6 +60,7 @@ export type Database = {
           glassimo_review?: string | null
           id?: string
           is_favorite?: boolean | null
+          osts?: Json
           platform?: string | null
           plot?: string | null
           rating?: number | null
@@ -89,6 +91,7 @@ export type Database = {
           glassimo_review?: string | null
           id?: string
           is_favorite?: boolean | null
+          osts?: Json
           platform?: string | null
           plot?: string | null
           rating?: number | null
