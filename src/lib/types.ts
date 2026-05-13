@@ -15,6 +15,14 @@ export interface ActorInfo {
   reaction?: 'loved' | 'hated';
 }
 
+export interface SpotifyTrack {
+  id: string;
+  name: string;
+  artist: string;
+  cover: string;
+  url?: string;
+}
+
 export interface Drama {
   id: string;
   title: string;
@@ -42,6 +50,7 @@ export interface Drama {
   glassimoReview: string;
   tmdbId?: number;
   cast: ActorInfo[];
+  osts?: SpotifyTrack[];
 }
 
 export const PLATFORMS = ['Netflix', 'Viki', 'Disney+', 'Amazon Prime Video', 'StreamingCommunity', 'RamaOriental', 'Other'];
