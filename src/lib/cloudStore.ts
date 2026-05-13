@@ -31,6 +31,7 @@ function toDbRow(drama: Drama, userId: string) {
     tmdb_id: drama.tmdbId ?? null,
     cast_data: drama.cast as any,
     created_at: drama.createdAt,
+    osts: (drama.osts ?? []) as any,
   };
 }
 
@@ -63,6 +64,7 @@ function fromDbRow(row: any): Drama {
     glassimoReview: row.glassimo_review || '',
     tmdbId: row.tmdb_id ?? undefined,
     cast: (row.cast_data as any[]) || [],
+    osts: (row.osts as any[]) || [],
   };
 }
 
