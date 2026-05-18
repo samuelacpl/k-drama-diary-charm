@@ -47,7 +47,7 @@ export default function ActorDetail() {
       character: string;
     }[] = [];
 
-    allDramas.forEach((d) => {
+    allDramas.filter((d) => d.status !== "plan-to-watch").forEach((d) => {
       (d.cast ?? []).forEach((a: ActorInfo) => {
         if (a.id === id) {
           name = a.name;

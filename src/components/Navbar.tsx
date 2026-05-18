@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { BookHeart, Home, Trophy, BarChart3, Image, Users, Quote, Tv, LogOut, Music } from "lucide-react";
+import { BookHeart, Home, Trophy, BarChart3, Image, Users, Quote, Tv, LogOut, Music, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 export function Navbar() {
@@ -9,12 +9,13 @@ export function Navbar() {
   const links = [
     { to: "/", icon: Home, label: "Home" },
     { to: "/watchlist", icon: Tv, label: "Watchlist" },
-    { to: "/ranking", icon: Trophy, label: "Ranking" },
-    { to: "/gallery", icon: Image, label: "Gallery" },
     { to: "/quotes", icon: Quote, label: "Quotes" },
+    { to: "/gallery", icon: Image, label: "Gallery" },
     { to: "/osts", icon: Music, label: "OSTs" },
-    { to: "/stats", icon: BarChart3, label: "Stats" },
     { to: "/actors", icon: Users, label: "Actors" },
+    { to: "/ranking", icon: Trophy, label: "Ranking" },
+    { to: "/stats", icon: BarChart3, label: "Stats" },
+    { to: "/wrapped", icon: Sparkles, label: "Wrapped" },
   ];
 
   return (

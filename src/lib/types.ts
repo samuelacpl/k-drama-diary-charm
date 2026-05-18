@@ -15,13 +15,16 @@ export interface ActorInfo {
   reaction?: 'loved' | 'hated';
 }
 
-export interface SpotifyTrack {
+export interface MusicTrack {
   id: string;
   name: string;
   artist: string;
   cover: string;
   url?: string;
+  preview?: string;
 }
+// Backward-compat alias (legacy import name)
+export type SpotifyTrack = MusicTrack;
 
 export interface Drama {
   id: string;
@@ -50,7 +53,7 @@ export interface Drama {
   glassimoReview: string;
   tmdbId?: number;
   cast: ActorInfo[];
-  osts?: SpotifyTrack[];
+  osts?: MusicTrack[];
 }
 
 export const PLATFORMS = ['Netflix', 'Viki', 'Disney+', 'Amazon Prime Video', 'StreamingCommunity', 'RamaOriental', 'Other'];
