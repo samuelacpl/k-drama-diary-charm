@@ -21,10 +21,13 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 export default function Watchlist() {
   const navigate = useNavigate();
   const { data: allDramas = [] } = useDramas();
-  const dramas = useMemo(
-    () => allDramas.filter((d) => d.status === "plan-to-watch"),
-    [allDramas],
-  );
+  const [withGlassimoFilter, setWithGlassimoFilter] = useState(false);
+  const [addWithGlassimo, setAddWithGlassimo] = useState(false);
+  const dramas = useMemo(() => {
+    let list = allDramas.filter((d) => d.status === "plan-to-watch");
+    if (withGlassimoFilter) list = list.filter((d) => d.watchedWithGlassimo);
+    return list;
+  }, [allDramas, withGlassimoFilter]);
   const [selectedDrama, setSelectedDrama] = useState<Drama | null>(null);
 
   // TMDb search
@@ -103,14 +106,14 @@ export default function Watchlist() {
       isFavorite: false,
       createdAt: new Date().toISOString(),
       watchingImages: [],
-      watchedWithGlassimo: false,
+      watchedWithGlassimo: addWithGlassimo,
       glassimoReview: "",
       tmdbId: result.id,
       cast,
     };
 
     await saveDrama(drama);
-    toast.success(`"${result.name}" added to Watchlist! 📌`);
+    toast.success(`"${result.name}" added to Watchlist!${addWithGlassimo ? " 🥂" : " 📌"}`);
   };
 
   const handleMarkWatched = (drama: Drama) => {
@@ -138,6 +141,7 @@ export default function Watchlist() {
 
         {/* Search */}
         {hasTmdbKey() && (
+          <>
           <div className="relative">
             <Search
               size={16}
@@ -185,7 +189,36 @@ export default function Watchlist() {
               </div>
             )}
           </div>
+          <label className="flex items-center justify-center gap-2 text-xs text-muted-foreground cursor-pointer">
+            <Checkbox checked={addWithGlassimo} onCheckedChange={(v) => setAddWithGlassimo(!!v)} />
+            <span>🥂 Watch with Glassimo</span>
+          </label>
+          </>
         )}
+
+        {/* Filters */}
+        <div className="flex justify-center gap-2">
+          <button
+            onClick={() => setWithGlassimoFilter(false)}
+            className={`text-xs font-semibold px-4 py-1.5 rounded-full transition-colors ${
+              !withGlassimoFilter
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-secondary-foreground hover:bg-accent"
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setWithGlassimoFilter(true)}
+            className={`text-xs font-semibold px-4 py-1.5 rounded-full transition-colors ${
+              withGlassimoFilter
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-secondary-foreground hover:bg-accent"
+            }`}
+          >
+            🥂 To watch with Glassimo
+          </button>
+        </div>
 
         {/* Watchlist Items */}
         {dramas.length > 0 ? (
@@ -211,8 +244,9 @@ export default function Watchlist() {
                   loading="lazy"
                 />
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm truncate">
+                  <h3 className="font-semibold text-sm truncate flex items-center gap-1">
                     {drama.title}
+                    {drama.watchedWithGlassimo && <span title="With Glassimo">🥂</span>}
                   </h3>
                   <p className="text-xs text-muted-foreground">
                     {drama.totalEpisodes} episodes

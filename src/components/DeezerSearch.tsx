@@ -1,20 +1,22 @@
 import { useState, useRef, useCallback } from 'react';
-import { Search, X, Plus, Music } from 'lucide-react';
+import { Search, X, Plus, Music, Play, Pause } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { SpotifyTrack } from '@/lib/types';
+import { MusicTrack } from '@/lib/types';
 import { toast } from 'sonner';
 
 interface Props {
-  tracks: SpotifyTrack[];
-  onChange: (tracks: SpotifyTrack[]) => void;
+  tracks: MusicTrack[];
+  onChange: (tracks: MusicTrack[]) => void;
 }
 
-export default function SpotifySearch({ tracks, onChange }: Props) {
+export default function DeezerSearch({ tracks, onChange }: Props) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SpotifyTrack[]>([]);
+  const [results, setResults] = useState<MusicTrack[]>([]);
   const [open, setOpen] = useState(false);
   const [showInput, setShowInput] = useState(tracks.length === 0);
   const [loading, setLoading] = useState(false);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>();
 
   const search = useCallback((q: string) => {
@@ -24,20 +26,17 @@ export default function SpotifySearch({ tracks, onChange }: Props) {
     timer.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/spotify-search?q=${encodeURIComponent(q)}`;
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deezer-search?q=${encodeURIComponent(q)}`;
         const session = (await supabase.auth.getSession()).data.session;
         const apiKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
         const res = await fetch(url, {
-          headers: {
-            apikey: apiKey,
-            Authorization: `Bearer ${session?.access_token ?? apiKey}`,
-          },
+          headers: { apikey: apiKey, Authorization: `Bearer ${session?.access_token ?? apiKey}` },
         });
         const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Spotify error');
+        if (!res.ok) throw new Error(json.error || 'Deezer error');
         setResults(json.tracks ?? []);
       } catch (err: any) {
-        toast.error(err?.message || 'Spotify search failed');
+        toast.error(err?.message || 'Deezer search failed');
         setResults([]);
       } finally {
         setLoading(false);
@@ -45,7 +44,22 @@ export default function SpotifySearch({ tracks, onChange }: Props) {
     }, 350);
   }, []);
 
-  const addTrack = (t: SpotifyTrack) => {
+  const togglePreview = (t: MusicTrack) => {
+    if (!t.preview) return;
+    if (playingId === t.id) {
+      audioRef.current?.pause();
+      setPlayingId(null);
+      return;
+    }
+    audioRef.current?.pause();
+    const audio = new Audio(t.preview);
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+    audio.onended = () => setPlayingId(null);
+    setPlayingId(t.id);
+  };
+
+  const addTrack = (t: MusicTrack) => {
     if (tracks.some(x => x.id === t.id)) {
       toast.error('OST già aggiunto');
       return;
@@ -74,6 +88,11 @@ export default function SpotifySearch({ tracks, onChange }: Props) {
                 <p className="text-sm font-semibold text-foreground line-clamp-1">{t.name}</p>
                 <p className="text-xs text-muted-foreground line-clamp-1">{t.artist}</p>
               </div>
+              {t.preview && (
+                <button type="button" onClick={() => togglePreview(t)} className="p-1.5 rounded-full hover:bg-secondary text-foreground transition-colors">
+                  {playingId === t.id ? <Pause size={14} /> : <Play size={14} />}
+                </button>
+              )}
               <button type="button" onClick={() => remove(t.id)} className="p-1.5 rounded-full hover:bg-destructive/10 text-destructive transition-colors">
                 <X size={14} />
               </button>
@@ -82,14 +101,14 @@ export default function SpotifySearch({ tracks, onChange }: Props) {
         </div>
       )}
 
-      {showInput ? (
+      {showInput && (
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             value={query}
             onChange={e => { search(e.target.value); setOpen(true); }}
             onFocus={() => results.length && setOpen(true)}
-            placeholder="Cerca un brano su Spotify..."
+            placeholder="Cerca un brano (Deezer)..."
             className={`${inputClass} pl-9`}
           />
           {open && (results.length > 0 || loading) && (
@@ -111,7 +130,7 @@ export default function SpotifySearch({ tracks, onChange }: Props) {
             </div>
           )}
         </div>
-      ) : null}
+      )}
 
       <button type="button" onClick={() => setShowInput(s => !s)}
         className="flex items-center gap-1.5 text-xs text-primary font-semibold hover:underline">

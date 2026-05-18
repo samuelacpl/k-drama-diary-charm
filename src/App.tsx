@@ -22,6 +22,7 @@ const Actors = lazy(() => import("./pages/Actors"));
 const ActorDetail = lazy(() => import("./pages/ActorDetail"));
 const Watchlist = lazy(() => import("./pages/Watchlist"));
 const Osts = lazy(() => import("./pages/Osts"));
+const Wrapped = lazy(() => import("./pages/Wrapped"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -162,6 +163,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <ActorDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/wrapped"
+                element={
+                  <ProtectedRoute>
+                    <Wrapped />
                   </ProtectedRoute>
                 }
               />
