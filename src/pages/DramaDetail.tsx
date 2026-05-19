@@ -4,8 +4,9 @@ import {
   Heart,
   Trash2,
   Edit,
-  ChevronLeft,
-  ChevronRight,
+  Tv,
+  Play,
+  Pause,
 } from "lucide-react";
 import { getDrama, saveDrama, deleteDrama } from "@/lib/store";
 import { StarRating } from "@/components/StarRating";
@@ -13,7 +14,7 @@ import EmotionalBadges from "@/components/EmotionalBadges";
 import { Navbar } from "@/components/Navbar";
 import QuotesSlider from "@/components/QuotesSlider";
 import ActorCard from "@/components/ActorCard";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Drama, ActorInfo } from "@/lib/types";
 import { useDramas } from "@/hooks/useDramas";
 import { Music } from "lucide-react";
@@ -27,42 +28,16 @@ function CastCarousel({
   onReact: (actorId: number, reaction: "loved" | "hated") => void;
   readOnly?: boolean;
 }) {
-  const [offset, setOffset] = useState(0);
-  const visible = 6;
-  const maxOffset = Math.max(0, cast.length - visible);
-
   return (
     <div className="glass-card rounded-2xl p-6 space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-lg font-semibold">🎭 Cast</h3>
-        <div className="flex items-center gap-2">
-          {cast.length > visible && (
-            <div className="flex gap-1">
-              <button
-                onClick={() => setOffset((o) => Math.max(0, o - 1))}
-                disabled={offset === 0}
-                className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <button
-                onClick={() => setOffset((o) => Math.min(maxOffset, o + 1))}
-                disabled={offset >= maxOffset}
-                className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          )}
-        </div>
+        <span className="text-[10px] text-muted-foreground">{cast.length} · swipe →</span>
       </div>
-      <div className="overflow-hidden">
-        <div
-          className="flex gap-4 transition-transform duration-300"
-          style={{ transform: `translateX(-${offset * (80 + 16)}px)` }}
-        >
+      <div className="overflow-x-auto -mx-2 px-2 snap-x scroll-smooth">
+        <div className="flex gap-4 pb-1">
           {cast.map((actor) => (
-            <div key={actor.id} className="shrink-0" style={{ width: 80 }}>
+            <div key={actor.id} className="shrink-0 snap-start" style={{ width: 80 }}>
               <ActorCard
                 actor={actor}
                 onReact={
@@ -75,6 +50,45 @@ function CastCarousel({
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function OstPlayCard({ t }: { t: { id: string; name: string; artist: string; cover: string; url?: string; preview?: string } }) {
+  const [playing, setPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const toggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!t.preview) return;
+    if (playing) {
+      audioRef.current?.pause();
+      setPlaying(false);
+      return;
+    }
+    const audio = new Audio(t.preview);
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+    audio.onended = () => setPlaying(false);
+    setPlaying(true);
+  };
+  useEffect(() => () => audioRef.current?.pause(), []);
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-2 pr-3">
+      <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted shrink-0">
+        {t.cover ? <img src={t.cover} alt="" className="w-full h-full object-cover" loading="lazy" /> : <Music size={18} className="m-auto text-muted-foreground" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-foreground line-clamp-1">{t.name}</p>
+        <p className="text-xs text-muted-foreground line-clamp-1">{t.artist}</p>
+      </div>
+      {t.preview && (
+        <button onClick={toggle} className="p-2 rounded-full bg-blush/40 hover:bg-blush/60 text-foreground transition-colors" aria-label={playing ? 'Pause' : 'Play'}>
+          {playing ? <Pause size={14} /> : <Play size={14} />}
+        </button>
+      )}
+      {t.url && (
+        <a href={t.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary font-semibold hover:underline">↗</a>
+      )}
     </div>
   );
 }
