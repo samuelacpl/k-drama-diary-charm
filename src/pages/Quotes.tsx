@@ -47,6 +47,7 @@ export default function Quotes() {
   const [drag, setDrag] = useState(0);
   const [exiting, setExiting] = useState<null | "left" | "right">(null);
   const recent = useRef<number[]>([]);
+  const historyRef = useRef<number[]>([]);
   const startX = useRef<number | null>(null);
 
   const pickRandom = () => {
@@ -65,14 +66,27 @@ export default function Quotes() {
     return n;
   };
 
-  const swipe = (dir: "left" | "right") => {
-    setExiting(dir);
+  const goNext = () => {
+    setExiting("right");
     setTimeout(() => {
+      historyRef.current.push(inspoIdx);
+      if (historyRef.current.length > 50) historyRef.current.shift();
       setInspoIdx(pickRandom());
       setDrag(0);
       setExiting(null);
     }, 220);
   };
+  const goPrev = () => {
+    if (historyRef.current.length === 0) { setDrag(0); return; }
+    setExiting("left");
+    setTimeout(() => {
+      const prev = historyRef.current.pop()!;
+      setInspoIdx(prev);
+      setDrag(0);
+      setExiting(null);
+    }, 220);
+  };
+  const swipe = (dir: "left" | "right") => (dir === "right" ? goNext() : goPrev());
 
   const onPointerDown = (e: React.PointerEvent) => {
     startX.current = e.clientX;
