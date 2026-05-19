@@ -466,6 +466,73 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
       <div className={sectionClass}>
         <h2 className="font-display text-lg font-bold text-foreground">🧸 Fan Corner</h2>
 
+        {/* Rewatched — placed BEFORE the cast carousel */}
+        <div className="space-y-3 rounded-2xl bg-card/50 p-4 border border-border/50">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
+              <Tv size={16} className="text-primary" />
+              Rewatched
+              {rewatches.length > 0 && (
+                <span className="text-[11px] text-muted-foreground">({rewatches.length}×)</span>
+              )}
+            </h3>
+            <button
+              type="button"
+              onClick={() => {
+                const id = crypto.randomUUID();
+                setRewatches(prev => [...prev, { id, emotions: '', createdAt: new Date().toISOString() }]);
+                setDraftingRewatchId(id);
+              }}
+              disabled={draftingRewatchId !== null}
+              className="flex items-center gap-1 text-xs font-semibold text-primary px-3 py-1 rounded-full bg-blush/40 hover:bg-blush/60 transition-colors disabled:opacity-40"
+            >
+              <Plus size={14} /> Add
+            </button>
+          </div>
+
+          {rewatches.length === 0 && draftingRewatchId === null && (
+            <p className="text-[11px] text-muted-foreground">No rewatches yet. Tap + when you revisit this drama 💕</p>
+          )}
+
+          {rewatches.map((r, i) => {
+            const isDraft = r.id === draftingRewatchId;
+            return (
+              <div key={r.id} className="space-y-2 rounded-xl border border-border bg-card p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-muted-foreground">
+                    Rewatch #{i + 1} · {new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                  {!isDraft && (
+                    <button type="button" onClick={() => setRewatches(prev => prev.filter(x => x.id !== r.id))}
+                      className="text-[11px] text-destructive hover:underline">Remove</button>
+                  )}
+                </div>
+                <textarea
+                  value={r.emotions}
+                  onChange={e => setRewatches(prev => prev.map(x => x.id === r.id ? { ...x, emotions: e.target.value } : x))}
+                  rows={2}
+                  placeholder="New emotions..."
+                  className={inputClass}
+                />
+                {isDraft && (
+                  <div className="flex justify-end gap-2">
+                    <button type="button"
+                      onClick={() => { setRewatches(prev => prev.filter(x => x.id !== r.id)); setDraftingRewatchId(null); }}
+                      className="text-xs px-3 py-1 rounded-lg border border-border text-muted-foreground hover:bg-secondary transition-colors">
+                      Cancel
+                    </button>
+                    <button type="button"
+                      onClick={() => setDraftingRewatchId(null)}
+                      className="text-xs px-3 py-1 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity">
+                      Save
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
         {/* Cast Carousel - below Glassimo, above Favorite Characters */}
         {cast.length > 0 && (
           <CastFormCarousel cast={cast} onReact={(actorId, reaction) => {
