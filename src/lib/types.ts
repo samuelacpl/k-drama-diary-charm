@@ -26,6 +26,12 @@ export interface MusicTrack {
 // Backward-compat alias (legacy import name)
 export type SpotifyTrack = MusicTrack;
 
+export interface RewatchEntry {
+  id: string;
+  emotions: string;
+  createdAt: string;
+}
+
 export interface Drama {
   id: string;
   title: string;
@@ -54,14 +60,15 @@ export interface Drama {
   tmdbId?: number;
   cast: ActorInfo[];
   osts?: MusicTrack[];
+  rewatches?: RewatchEntry[];
 }
 
 export const PLATFORMS = ['Netflix', 'Viki', 'Disney+', 'Amazon Prime Video', 'StreamingCommunity', 'RamaOriental', 'Other'];
 
 export const GENRE_TAGS = [
   'Romance', 'Historical', 'Thriller', 'Comedy', 'Melodrama',
-  'Fantasy', 'Sci-Fi', 'Slice of Life', 'Action', 'Horror',
-  'Slow Burn', 'Love Triangle', 'Enemies to Lovers', 'Office Romance',
+  'Fantasy', 'Slice of Life', 'Horror',
+  'Love Triangle', 'Office Romance', 'School', 'Light Heart',
 ];
 
 export const STATUS_OPTIONS: { value: DramaStatus; label: string; color: string }[] = [
