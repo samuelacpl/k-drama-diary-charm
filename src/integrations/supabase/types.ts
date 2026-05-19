@@ -34,6 +34,7 @@ export type Database = {
           plot: string | null
           rating: number | null
           review: string | null
+          rewatches: Json
           second_lead_syndrome: boolean | null
           status: string
           tags: Json | null
@@ -65,6 +66,7 @@ export type Database = {
           plot?: string | null
           rating?: number | null
           review?: string | null
+          rewatches?: Json
           second_lead_syndrome?: boolean | null
           status?: string
           tags?: Json | null
@@ -96,6 +98,7 @@ export type Database = {
           plot?: string | null
           rating?: number | null
           review?: string | null
+          rewatches?: Json
           second_lead_syndrome?: boolean | null
           status?: string
           tags?: Json | null

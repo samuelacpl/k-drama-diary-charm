@@ -4,7 +4,7 @@ import { useDramas } from "@/hooks/useDramas";
 import { ActorInfo } from "@/lib/types";
 import { Navbar } from "@/components/Navbar";
 import { profileUrl } from "@/lib/tmdb";
-import { Users, Loader2 } from "lucide-react";
+import { Users, Loader2, Search } from "lucide-react";
 
 interface ActorAggregate {
   id: number;
@@ -20,6 +20,7 @@ type SortOption = "alpha" | "loved" | "watched";
 export default function Actors() {
   const { data: dramas = [], isLoading } = useDramas();
   const [sortBy, setSortBy] = useState<SortOption>("alpha");
+  const [searchQuery, setSearchQuery] = useState("");
   const allDramas = useMemo(
     () => dramas.filter((d) => d.status !== "plan-to-watch"),
     [dramas],
@@ -50,8 +51,11 @@ export default function Actors() {
       });
     });
 
-    const list = Array.from(map.values());
-
+    let list = Array.from(map.values());
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter((a) => a.name.toLowerCase().includes(q));
+    }
     switch (sortBy) {
       case "loved":
         return list.sort(
@@ -66,7 +70,7 @@ export default function Actors() {
       default:
         return list.sort((a, b) => a.name.localeCompare(b.name));
     }
-  }, [allDramas, sortBy, isLoading]);
+  }, [allDramas, sortBy, isLoading, searchQuery]);
 
   const sortOptions: { value: SortOption; label: string }[] = [
     { value: "alpha", label: "A → Z" },
@@ -96,6 +100,17 @@ export default function Actors() {
           </div>
         ) : (
           <>
+            {/* Search */}
+            <div className="relative max-w-md mx-auto">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search actor..."
+                className="w-full pl-9 pr-4 py-2.5 rounded-2xl bg-card border-2 border-border text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+              />
+            </div>
+
             {/* Sorting */}
             {actors.length > 0 && (
               <div className="flex justify-center gap-2">

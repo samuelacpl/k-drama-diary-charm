@@ -141,22 +141,22 @@ export default function Watchlist() {
 
         {/* Search */}
         {hasTmdbKey() && (
-          <>
-          <div className="relative">
-            <Search
-              size={16}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
-            />
-            <input
-              value={query}
-              onChange={(e) => {
-                handleSearch(e.target.value);
-                setShowResults(true);
-              }}
-              onFocus={() => results.length && setShowResults(true)}
-              placeholder="Search K-Drama to add..."
-              className="w-full pl-10 pr-4 py-3 rounded-2xl bg-card border-2 border-border text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
-            />
+          <div className="flex items-stretch gap-2">
+            <div className="relative flex-1">
+              <Search
+                size={16}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                value={query}
+                onChange={(e) => {
+                  handleSearch(e.target.value);
+                  setShowResults(true);
+                }}
+                onFocus={() => results.length && setShowResults(true)}
+                placeholder="Search K-Drama to add..."
+                className="w-full pl-10 pr-4 py-3 rounded-2xl bg-card border-2 border-border text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+              />
             {showResults && (results.length > 0 || loading) && (
               <div className="absolute z-20 mt-1 w-full rounded-xl border border-border bg-card shadow-lg max-h-72 overflow-y-auto">
                 {loading ? (
@@ -188,12 +188,21 @@ export default function Watchlist() {
                 )}
               </div>
             )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setAddWithGlassimo(v => !v)}
+              title="Watch with Glassimo"
+              className={`shrink-0 flex items-center gap-1.5 px-3 sm:px-4 rounded-2xl border-2 text-xs sm:text-sm font-semibold transition-colors ${
+                addWithGlassimo
+                  ? 'bg-blush/50 border-rose text-foreground'
+                  : 'bg-card border-border text-muted-foreground hover:border-rose/40'
+              }`}
+            >
+              <span className="text-base leading-none">🥂</span>
+              <span className="hidden sm:inline">Glassimo</span>
+            </button>
           </div>
-          <label className="flex items-center justify-center gap-2 text-xs text-muted-foreground cursor-pointer">
-            <Checkbox checked={addWithGlassimo} onCheckedChange={(v) => setAddWithGlassimo(!!v)} />
-            <span>🥂 Watch with Glassimo</span>
-          </label>
-          </>
         )}
 
         {/* Filters */}

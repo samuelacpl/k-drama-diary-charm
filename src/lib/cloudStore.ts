@@ -32,6 +32,7 @@ function toDbRow(drama: Drama, userId: string) {
     cast_data: drama.cast as any,
     created_at: drama.createdAt,
     osts: (drama.osts ?? []) as any,
+    rewatches: (drama.rewatches ?? []) as any,
   };
 }
 
@@ -65,6 +66,7 @@ function fromDbRow(row: any): Drama {
     tmdbId: row.tmdb_id ?? undefined,
     cast: (row.cast_data as any[]) || [],
     osts: (row.osts as any[]) || [],
+    rewatches: (row.rewatches as any[]) || [],
   };
 }
 

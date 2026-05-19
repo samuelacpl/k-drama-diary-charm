@@ -47,6 +47,7 @@ export default function Quotes() {
   const [drag, setDrag] = useState(0);
   const [exiting, setExiting] = useState<null | "left" | "right">(null);
   const recent = useRef<number[]>([]);
+  const historyRef = useRef<number[]>([]);
   const startX = useRef<number | null>(null);
 
   const pickRandom = () => {
@@ -65,14 +66,27 @@ export default function Quotes() {
     return n;
   };
 
-  const swipe = (dir: "left" | "right") => {
-    setExiting(dir);
+  const goNext = () => {
+    setExiting("right");
     setTimeout(() => {
+      historyRef.current.push(inspoIdx);
+      if (historyRef.current.length > 50) historyRef.current.shift();
       setInspoIdx(pickRandom());
       setDrag(0);
       setExiting(null);
     }, 220);
   };
+  const goPrev = () => {
+    if (historyRef.current.length === 0) { setDrag(0); return; }
+    setExiting("left");
+    setTimeout(() => {
+      const prev = historyRef.current.pop()!;
+      setInspoIdx(prev);
+      setDrag(0);
+      setExiting(null);
+    }, 220);
+  };
+  const swipe = (dir: "left" | "right") => (dir === "right" ? goNext() : goPrev());
 
   const onPointerDown = (e: React.PointerEvent) => {
     startX.current = e.clientX;
@@ -162,7 +176,7 @@ export default function Quotes() {
           </div>
         ) : (
           <div className="flex flex-col items-center gap-6 py-4 select-none">
-            <div className="relative w-full max-w-sm h-[420px]">
+            <div className="relative w-full max-w-sm h-[460px]">
               {current && (
                 <div
                   onPointerDown={onPointerDown}
@@ -174,15 +188,21 @@ export default function Quotes() {
                     transition: exiting || startX.current === null ? "transform 0.22s ease-out" : "none",
                     touchAction: "pan-y",
                   }}
-                  className="absolute inset-0 glass-card rounded-3xl p-6 flex flex-col items-center justify-center text-center gap-5 cursor-grab active:cursor-grabbing shadow-lg"
+                  className="absolute inset-0 glass-card rounded-3xl p-6 flex flex-col items-center text-center gap-4 cursor-grab active:cursor-grabbing shadow-lg"
                 >
-                  <Quote size={28} className="text-primary/60" />
-                  <blockquote className="font-display text-xl sm:text-2xl italic leading-relaxed text-foreground line-clamp-[10]">
-                    "{current.text}"
-                  </blockquote>
+                  <Quote size={24} className="text-primary/60 shrink-0" />
+                  <div
+                    className="flex-1 w-full overflow-y-auto px-1 flex items-center justify-center"
+                    style={{ touchAction: "pan-y" }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <blockquote className="font-display text-xl sm:text-2xl italic leading-relaxed text-foreground whitespace-pre-wrap">
+                      "{current.text}"
+                    </blockquote>
+                  </div>
                   <Link
                     to={`/drama/${current.dramaId}`}
-                    className="flex items-center gap-3 mt-auto pt-4"
+                    className="flex items-center gap-3 pt-2 shrink-0"
                   >
                     {current.cover && (
                       <img
@@ -202,28 +222,29 @@ export default function Quotes() {
             </div>
             <div className="flex items-center gap-4">
               <button
-                onClick={() => swipe("left")}
+                onClick={goPrev}
+                disabled={historyRef.current.length === 0}
                 className="p-3 rounded-full bg-card border border-border hover:bg-secondary transition-colors"
                 aria-label="Previous"
               >
                 <ChevronLeft size={20} />
               </button>
               <button
-                onClick={() => swipe("right")}
+                onClick={goNext}
                 className="p-3 rounded-full bg-primary text-primary-foreground hover:scale-105 transition-transform"
-                aria-label="Next"
+                aria-label="Shuffle next"
               >
                 <Shuffle size={20} />
               </button>
               <button
-                onClick={() => swipe("right")}
+                onClick={goNext}
                 className="p-3 rounded-full bg-card border border-border hover:bg-secondary transition-colors"
                 aria-label="Next"
               >
                 <ChevronRight size={20} />
               </button>
             </div>
-            <p className="text-[11px] text-muted-foreground">Swipe or tap to discover a new quote ✨</p>
+            <p className="text-[11px] text-muted-foreground">← previous · swipe or tap for a new quote ✨</p>
           </div>
         )}
       </div>
