@@ -1,0 +1,1 @@
+ALTER TABLE public.dramas ADD COLUMN IF NOT EXISTS rewatches jsonb NOT NULL DEFAULT '[]'::jsonb;
