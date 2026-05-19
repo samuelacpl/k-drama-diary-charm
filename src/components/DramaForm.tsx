@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Drama, DramaStatus, WatchingImage, ActorInfo, PLATFORMS, GENRE_TAGS, STATUS_OPTIONS } from '@/lib/types';
+import { Drama, DramaStatus, WatchingImage, ActorInfo, RewatchEntry, PLATFORMS, GENRE_TAGS, STATUS_OPTIONS } from '@/lib/types';
 import { searchDramas, getDramaDetails, getDramaCast, posterUrl, profileUrl, hasTmdbKey, TmdbSearchResult } from '@/lib/tmdb';
 import { getDramas } from '@/lib/store';
 import { StarRating } from './StarRating';
 import EmotionalBadges from './EmotionalBadges';
 import EpisodeStepper from './EpisodeStepper';
 import { toast } from 'sonner';
-import { Upload, X, Plus, Search } from 'lucide-react';
+import { Upload, X, Plus, Search, Tv } from 'lucide-react';
 import DeezerSearch from './DeezerSearch';
 import { MusicTrack } from '@/lib/types';
 
@@ -18,33 +17,18 @@ interface DramaFormProps {
 }
 
 function CastFormCarousel({ cast, onReact }: { cast: ActorInfo[]; onReact: (actorId: number, reaction: 'loved' | 'hated') => void }) {
-  const [offset, setOffset] = useState(0);
-  const visible = 6;
-  const maxOffset = Math.max(0, cast.length - visible);
-
   return (
     <div className="space-y-4 rounded-2xl bg-card/50 p-5">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-lg font-bold text-foreground">🎭 Cast</h2>
-        {cast.length > visible && (
-          <div className="flex gap-1">
-            <button type="button" onClick={() => setOffset(o => Math.max(0, o - 1))} disabled={offset === 0}
-              className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30">
-              <ChevronLeft size={16} />
-            </button>
-            <button type="button" onClick={() => setOffset(o => Math.min(maxOffset, o + 1))} disabled={offset >= maxOffset}
-              className="p-1.5 rounded-full hover:bg-secondary transition-colors disabled:opacity-30">
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        )}
+        <span className="text-[10px] text-muted-foreground">{cast.length} actors · swipe →</span>
       </div>
-      <div className="overflow-hidden">
-        <div className="flex gap-3 transition-transform duration-300" style={{ transform: `translateX(-${offset * (74 + 12)}px)` }}>
+      <div className="overflow-x-auto -mx-1 px-1 snap-x scroll-smooth">
+        <div className="flex gap-3 pb-1">
           {cast.map(actor => {
             const imgSrc = actor.profilePath?.startsWith('http') ? actor.profilePath : profileUrl(actor.profilePath);
             return (
-              <div key={actor.id} className="shrink-0 text-center space-y-1" style={{ width: 74 }}>
+              <div key={actor.id} className="shrink-0 snap-start text-center space-y-1" style={{ width: 74 }}>
                 <div className="w-14 h-14 mx-auto rounded-full overflow-hidden border-2 border-border bg-muted">
                   {imgSrc ? <img src={imgSrc} alt={actor.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-lg">🎭</div>}
                 </div>
@@ -107,6 +91,8 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
   const [glassimoReview, setGlassimoReview] = useState(initial?.glassimoReview ?? '');
   const [tmdbId, setTmdbId] = useState<number | undefined>(initial?.tmdbId);
   const [cast, setCast] = useState<ActorInfo[]>(initial?.cast ?? []);
+  const [rewatches, setRewatches] = useState<RewatchEntry[]>(initial?.rewatches ?? []);
+  const [draftingRewatchId, setDraftingRewatchId] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [existingDramas, setExistingDramas] = useState<Drama[]>([]);
 
@@ -237,7 +223,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
       favoriteCharacters, favoriteSongs, secondLeadSyndrome,
       isFavorite: initial?.isFavorite ?? false,
       watchingImages, watchedWithGlassimo, glassimoReview,
-      tmdbId, cast, osts,
+      tmdbId, cast, osts, rewatches,
     });
   };
 
