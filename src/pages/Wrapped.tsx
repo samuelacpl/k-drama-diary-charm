@@ -86,7 +86,7 @@ function buildSlides(dramas: Drama[], key: string): Slide[] {
     const sad = criers[0];
     slides.push({
       key: "cry",
-      bg: "from-sky/40 via-cream to-lavender/40",
+      bg: "from-lavender/40 via-cream to-blush/30",
       content: (
         <div className="text-center space-y-3 px-6">
           <p className="text-4xl">😭</p>
