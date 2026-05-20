@@ -1,13 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import {
-  ArrowLeft,
-  Heart,
-  Trash2,
-  Edit,
-  Tv,
-  Play,
-  Pause,
-} from "lucide-react";
+import { ArrowLeft, Heart, Trash2, Edit, Tv } from "lucide-react";
 import { getDrama, saveDrama, deleteDrama } from "@/lib/store";
 import { StarRating } from "@/components/StarRating";
 import EmotionalBadges from "@/components/EmotionalBadges";
@@ -20,6 +12,7 @@ import { useDramas } from "@/hooks/useDramas";
 import { Music } from "lucide-react";
 import { Loader } from "@/components/Loader";
 import { profileUrl } from "@/lib/tmdb";
+import OstPlayButton from "@/components/OstPlayButton";
 
 function CastCarousel({
   cast,
@@ -57,23 +50,6 @@ function CastCarousel({
 }
 
 function OstPlayCard({ t }: { t: { id: string; name: string; artist: string; cover: string; url?: string; preview?: string } }) {
-  const [playing, setPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const toggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!t.preview) return;
-    if (playing) {
-      audioRef.current?.pause();
-      setPlaying(false);
-      return;
-    }
-    const audio = new Audio(t.preview);
-    audioRef.current = audio;
-    audio.play().catch(() => {});
-    audio.onended = () => setPlaying(false);
-    setPlaying(true);
-  };
-  useEffect(() => () => audioRef.current?.pause(), []);
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-2 pr-3">
       <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted shrink-0">
@@ -83,11 +59,7 @@ function OstPlayCard({ t }: { t: { id: string; name: string; artist: string; cov
         <p className="text-sm font-semibold text-foreground line-clamp-1">{t.name}</p>
         <p className="text-xs text-muted-foreground line-clamp-1">{t.artist}</p>
       </div>
-      {t.preview && (
-        <button onClick={toggle} className="p-2 rounded-full bg-blush/40 hover:bg-blush/60 text-foreground transition-colors" aria-label={playing ? 'Pause' : 'Play'}>
-          {playing ? <Pause size={14} /> : <Play size={14} />}
-        </button>
-      )}
+      <OstPlayButton preview={t.preview} />
       {t.url && (
         <a href={t.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary font-semibold hover:underline">↗</a>
       )}
