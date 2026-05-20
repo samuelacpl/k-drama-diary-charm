@@ -407,6 +407,27 @@ export default function DramaDetail() {
                 🥂 <span className="font-semibold">Watched with Glassimo</span>
               </p>
             )}
+            {/* Rewatched - inside Fan Corner, above Cast */}
+            {rewatches.length > 0 && (
+              <div className="space-y-2 rounded-2xl border border-border bg-card/60 p-4">
+                <h4 className="font-semibold text-sm flex items-center gap-2">
+                  <Tv size={16} className="text-primary" />
+                  <span>⭐ Rewatched {rewatches.length} times</span>
+                </h4>
+                <div className="space-y-2">
+                  {rewatches.map((r, i) => (
+                    <div key={r.id} className="rounded-xl border border-border bg-card p-3 space-y-1">
+                      <p className="text-[11px] font-semibold text-muted-foreground">
+                        Rewatch #{i + 1} · {new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                      {r.emotions && (
+                        <p className="text-sm italic text-foreground whitespace-pre-wrap leading-relaxed">{r.emotions}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {/* Cast carousel - reactions locked (read-only in detail view) */}
             {cast.length > 0 && (
               <CastCarousel cast={cast} onReact={handleActorReact} readOnly />
@@ -434,30 +455,26 @@ export default function DramaDetail() {
               </div>
             )}
             {drama.secondLeadSyndrome && (
-              <p className="text-sm">💔 Had Second Lead Syndrome 😭</p>
+              <div className="flex items-center gap-3 rounded-2xl bg-rose/10 border border-rose/30 p-3">
+                <span className="text-sm">💔 Second Lead Syndrome</span>
+                {(() => {
+                  const sl = cast.find(a => a.id === drama.secondLeadActorId);
+                  if (!sl) return <span className="text-xs text-muted-foreground">😭</span>;
+                  const img = sl.profilePath?.startsWith('http') ? sl.profilePath : profileUrl(sl.profilePath);
+                  return (
+                    <div className="flex items-center gap-2 ml-auto">
+                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-rose bg-muted">
+                        {img ? <img src={img} alt={sl.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center">🎭</div>}
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[11px] font-bold text-foreground line-clamp-1">{sl.name}</p>
+                        <p className="text-[10px] text-muted-foreground line-clamp-1">as {sl.character}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             )}
-          </div>
-        )}
-
-        {/* Rewatched */}
-        {rewatches.length > 0 && (
-          <div className="glass-card rounded-2xl p-6 space-y-3 animate-fade-in">
-            <h3 className="font-display text-lg font-semibold flex items-center gap-2">
-              <Tv size={18} className="text-primary" />
-              <span>⭐ Rewatched ({rewatches.length}) times</span>
-            </h3>
-            <div className="space-y-2">
-              {rewatches.map((r, i) => (
-                <div key={r.id} className="rounded-xl border border-border bg-card/60 p-3 space-y-1">
-                  <p className="text-[11px] font-semibold text-muted-foreground">
-                    Rewatch #{i + 1} · {new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </p>
-                  {r.emotions && (
-                    <p className="text-sm italic text-foreground whitespace-pre-wrap leading-relaxed">{r.emotions}</p>
-                  )}
-                </div>
-              ))}
-            </div>
           </div>
         )}
 
