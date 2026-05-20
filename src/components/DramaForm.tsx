@@ -480,7 +480,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
               <Tv size={16} className="text-primary" />
               Rewatched
               {rewatches.length > 0 && (
-                <span className="text-[11px] text-muted-foreground">({rewatches.length}×)</span>
+                <span className="text-[11px] text-muted-foreground">{rewatches.length} times</span>
               )}
             </h3>
             <button
