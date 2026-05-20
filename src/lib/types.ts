@@ -61,6 +61,8 @@ export interface Drama {
   cast: ActorInfo[];
   osts?: MusicTrack[];
   rewatches?: RewatchEntry[];
+  secondLeadActorId?: number;
+  releaseYear?: number;
 }
 
 export const PLATFORMS = ['Netflix', 'Viki', 'Disney+', 'Amazon Prime Video', 'StreamingCommunity', 'RamaOriental', 'Other'];
