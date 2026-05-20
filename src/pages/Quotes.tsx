@@ -11,16 +11,17 @@ export default function Quotes() {
 
   const allQuotes = useMemo(() => {
     return dramas.flatMap((d) => {
+      const year = d.releaseYear ?? (d.createdAt ? new Date(d.createdAt).getFullYear() : undefined);
       const quotes = d.favoriteQuotes ?? [];
       if (quotes.length === 0 && d.favoriteQuote) {
-        return [{ text: d.favoriteQuote, dramaId: d.id, dramaTitle: d.title, cover: d.coverImage, year: new Date(d.createdAt).getFullYear() }];
+        return [{ text: d.favoriteQuote, dramaId: d.id, dramaTitle: d.title, cover: d.coverImage, year }];
       }
       return quotes.map((q) => ({
         text: q,
         dramaId: d.id,
         dramaTitle: d.title,
         cover: d.coverImage,
-        year: new Date(d.createdAt).getFullYear(),
+        year,
       }));
     });
   }, [dramas]);
