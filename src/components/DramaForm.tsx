@@ -92,6 +92,8 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
   const [tmdbId, setTmdbId] = useState<number | undefined>(initial?.tmdbId);
   const [cast, setCast] = useState<ActorInfo[]>(initial?.cast ?? []);
   const [rewatches, setRewatches] = useState<RewatchEntry[]>(initial?.rewatches ?? []);
+  const [secondLeadActorId, setSecondLeadActorId] = useState<number | undefined>(initial?.secondLeadActorId);
+  const [releaseYear, setReleaseYear] = useState<number | undefined>(initial?.releaseYear);
   const [draftingRewatchId, setDraftingRewatchId] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [existingDramas, setExistingDramas] = useState<Drama[]>([]);
@@ -145,6 +147,10 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
     }
     setTitle(result.name);
     setTmdbId(result.id);
+    if (result.first_air_date) {
+      const y = parseInt(result.first_air_date.slice(0, 4), 10);
+      if (!Number.isNaN(y)) setReleaseYear(y);
+    }
     if (result.poster_path) setCoverImage(posterUrl(result.poster_path, 'w500'));
 
     const detail = await getDramaDetails(result.id);
@@ -224,6 +230,7 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
       isFavorite: initial?.isFavorite ?? false,
       watchingImages, watchedWithGlassimo, glassimoReview,
       tmdbId, cast, osts, rewatches,
+      secondLeadActorId, releaseYear,
     });
   };
 
