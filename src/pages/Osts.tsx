@@ -1,40 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Music, Play, Pause } from "lucide-react";
+import { Music } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { useDramas } from "@/hooks/useDramas";
-
-function PlayButton({ preview, id, current, setCurrent }: { preview?: string; id: string; current: string | null; setCurrent: (id: string | null) => void }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const playing = current === id;
-  useEffect(() => {
-    if (!playing && audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-  }, [playing]);
-  const toggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!preview) return;
-    if (playing) { setCurrent(null); return; }
-    const audio = new Audio(preview);
-    audioRef.current = audio;
-    audio.play().catch(() => {});
-    audio.onended = () => setCurrent(null);
-    setCurrent(id);
-  };
-  if (!preview) return null;
-  return (
-    <button onClick={toggle} className="p-2 rounded-full bg-blush/40 hover:bg-blush/60 text-foreground transition-colors shrink-0" aria-label={playing ? 'Pause' : 'Play'}>
-      {playing ? <Pause size={14} /> : <Play size={14} />}
-    </button>
-  );
-}
+import OstPlayButton from "@/components/OstPlayButton";
+import { Loader } from "@/components/Loader";
 
 export default function Osts() {
   const { data: dramas = [], isLoading } = useDramas();
-  const [currentId, setCurrentId] = useState<string | null>(null);
 
   const items = useMemo(() => {
     return dramas.flatMap((d) =>
@@ -56,7 +29,7 @@ export default function Osts() {
         </div>
 
         {isLoading ? (
-          <p className="text-center text-muted-foreground animate-pulse py-12">Loading…</p>
+          <Loader label="Loading your OSTs..." />
         ) : items.length === 0 ? (
           <div className="text-center py-16 space-y-3">
             <Music size={48} className="mx-auto text-muted-foreground/40" />
@@ -83,7 +56,7 @@ export default function Osts() {
                     <p className="text-[10px] text-primary font-semibold mt-0.5 line-clamp-1">📺 {t.dramaTitle}</p>
                   </div>
                 </Link>
-                <PlayButton preview={t.preview} id={`${t.dramaId}-${t.id}-${i}`} current={currentId} setCurrent={setCurrentId} />
+                <OstPlayButton preview={t.preview} />
               </div>
             ))}
           </div>
