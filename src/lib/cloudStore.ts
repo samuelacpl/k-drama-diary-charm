@@ -33,6 +33,8 @@ function toDbRow(drama: Drama, userId: string) {
     created_at: drama.createdAt,
     osts: (drama.osts ?? []) as any,
     rewatches: (drama.rewatches ?? []) as any,
+    second_lead_actor_id: drama.secondLeadActorId ?? null,
+    release_year: drama.releaseYear ?? null,
   };
 }
 
@@ -67,6 +69,8 @@ function fromDbRow(row: any): Drama {
     cast: (row.cast_data as any[]) || [],
     osts: (row.osts as any[]) || [],
     rewatches: (row.rewatches as any[]) || [],
+    secondLeadActorId: row.second_lead_actor_id ?? undefined,
+    releaseYear: row.release_year ?? undefined,
   };
 }
 
