@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Loader } from "@/components/Loader";
@@ -254,13 +254,13 @@ export default function Wrapped() {
   };
 
   // Swipe
-  const startX = useState<{ x: number | null }>({ x: null })[0];
-  const onDown = (e: React.PointerEvent) => { startX.x = e.clientX; };
+  const startX = useRef<number | null>(null);
+  const onDown = (e: React.PointerEvent) => { startX.current = e.clientX; };
   const onUp = (e: React.PointerEvent) => {
-    if (startX.x === null) return;
-    const dx = e.clientX - startX.x;
+    if (startX.current === null) return;
+    const dx = e.clientX - startX.current;
     if (Math.abs(dx) > 60) goSlide(dx < 0 ? 1 : -1);
-    startX.x = null;
+    startX.current = null;
   };
 
   if (isLoading) {
