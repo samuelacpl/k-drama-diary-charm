@@ -386,7 +386,9 @@ export default function DramaDetail() {
         {(drama.favoriteCharacters ||
           drama.favoriteSongs ||
           drama.secondLeadSyndrome ||
-          cast.length > 0) && (
+          cast.length > 0 ||
+          rewatches.length > 0 ||
+          (drama.osts ?? []).length > 0) && (
           <div className="glass-card rounded-2xl p-6 space-y-4 animate-fade-in">
             <div className="flex items-center justify-between">
               <h3 className="font-display text-lg font-semibold">
