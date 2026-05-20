@@ -18,6 +18,8 @@ import { useEffect, useRef, useState } from "react";
 import { Drama, ActorInfo } from "@/lib/types";
 import { useDramas } from "@/hooks/useDramas";
 import { Music } from "lucide-react";
+import { Loader } from "@/components/Loader";
+import { profileUrl } from "@/lib/tmdb";
 
 function CastCarousel({
   cast,
@@ -121,11 +123,7 @@ export default function DramaDetail() {
     return (
       <div className="min-h-screen">
         <Navbar />
-        <div className="flex items-center justify-center py-20">
-          <p className="text-muted-foreground animate-pulse">
-            Loading drama details...
-          </p>
-        </div>
+        <Loader label="Loading drama details..." />
       </div>
     );
   }
