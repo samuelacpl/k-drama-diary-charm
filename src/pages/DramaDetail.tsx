@@ -1,23 +1,18 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import {
-  ArrowLeft,
-  Heart,
-  Trash2,
-  Edit,
-  Tv,
-  Play,
-  Pause,
-} from "lucide-react";
+import { ArrowLeft, Heart, Trash2, Edit, Tv } from "lucide-react";
 import { getDrama, saveDrama, deleteDrama } from "@/lib/store";
 import { StarRating } from "@/components/StarRating";
 import EmotionalBadges from "@/components/EmotionalBadges";
 import { Navbar } from "@/components/Navbar";
 import QuotesSlider from "@/components/QuotesSlider";
 import ActorCard from "@/components/ActorCard";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Drama, ActorInfo } from "@/lib/types";
 import { useDramas } from "@/hooks/useDramas";
 import { Music } from "lucide-react";
+import { Loader } from "@/components/Loader";
+import { profileUrl } from "@/lib/tmdb";
+import OstPlayButton from "@/components/OstPlayButton";
 
 function CastCarousel({
   cast,
@@ -55,23 +50,6 @@ function CastCarousel({
 }
 
 function OstPlayCard({ t }: { t: { id: string; name: string; artist: string; cover: string; url?: string; preview?: string } }) {
-  const [playing, setPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const toggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!t.preview) return;
-    if (playing) {
-      audioRef.current?.pause();
-      setPlaying(false);
-      return;
-    }
-    const audio = new Audio(t.preview);
-    audioRef.current = audio;
-    audio.play().catch(() => {});
-    audio.onended = () => setPlaying(false);
-    setPlaying(true);
-  };
-  useEffect(() => () => audioRef.current?.pause(), []);
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-2 pr-3">
       <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted shrink-0">
@@ -81,11 +59,7 @@ function OstPlayCard({ t }: { t: { id: string; name: string; artist: string; cov
         <p className="text-sm font-semibold text-foreground line-clamp-1">{t.name}</p>
         <p className="text-xs text-muted-foreground line-clamp-1">{t.artist}</p>
       </div>
-      {t.preview && (
-        <button onClick={toggle} className="p-2 rounded-full bg-blush/40 hover:bg-blush/60 text-foreground transition-colors" aria-label={playing ? 'Pause' : 'Play'}>
-          {playing ? <Pause size={14} /> : <Play size={14} />}
-        </button>
-      )}
+      <OstPlayButton preview={t.preview} />
       {t.url && (
         <a href={t.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary font-semibold hover:underline">↗</a>
       )}
@@ -121,11 +95,7 @@ export default function DramaDetail() {
     return (
       <div className="min-h-screen">
         <Navbar />
-        <div className="flex items-center justify-center py-20">
-          <p className="text-muted-foreground animate-pulse">
-            Loading drama details...
-          </p>
-        </div>
+        <Loader label="Loading drama details..." />
       </div>
     );
   }
@@ -388,7 +358,9 @@ export default function DramaDetail() {
         {(drama.favoriteCharacters ||
           drama.favoriteSongs ||
           drama.secondLeadSyndrome ||
-          cast.length > 0) && (
+          cast.length > 0 ||
+          rewatches.length > 0 ||
+          (drama.osts ?? []).length > 0) && (
           <div className="glass-card rounded-2xl p-6 space-y-4 animate-fade-in">
             <div className="flex items-center justify-between">
               <h3 className="font-display text-lg font-semibold">
@@ -408,6 +380,27 @@ export default function DramaDetail() {
               <p className="text-sm">
                 🥂 <span className="font-semibold">Watched with Glassimo</span>
               </p>
+            )}
+            {/* Rewatched - inside Fan Corner, above Cast */}
+            {rewatches.length > 0 && (
+              <div className="space-y-2 rounded-2xl border border-border bg-card/60 p-4">
+                <h4 className="font-semibold text-sm flex items-center gap-2">
+                  <Tv size={16} className="text-primary" />
+                  <span>⭐ Rewatched {rewatches.length} times</span>
+                </h4>
+                <div className="space-y-2">
+                  {rewatches.map((r, i) => (
+                    <div key={r.id} className="rounded-xl border border-border bg-card p-3 space-y-1">
+                      <p className="text-[11px] font-semibold text-muted-foreground">
+                        Rewatch #{i + 1} · {new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                      {r.emotions && (
+                        <p className="text-sm italic text-foreground whitespace-pre-wrap leading-relaxed">{r.emotions}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
             {/* Cast carousel - reactions locked (read-only in detail view) */}
             {cast.length > 0 && (
@@ -436,30 +429,26 @@ export default function DramaDetail() {
               </div>
             )}
             {drama.secondLeadSyndrome && (
-              <p className="text-sm">💔 Had Second Lead Syndrome 😭</p>
+              <div className="flex items-center gap-3 rounded-2xl bg-rose/10 border border-rose/30 p-3">
+                <span className="text-sm">💔 Second Lead Syndrome</span>
+                {(() => {
+                  const sl = cast.find(a => a.id === drama.secondLeadActorId);
+                  if (!sl) return <span className="text-xs text-muted-foreground">😭</span>;
+                  const img = sl.profilePath?.startsWith('http') ? sl.profilePath : profileUrl(sl.profilePath);
+                  return (
+                    <div className="flex items-center gap-2 ml-auto">
+                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-rose bg-muted">
+                        {img ? <img src={img} alt={sl.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center">🎭</div>}
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[11px] font-bold text-foreground line-clamp-1">{sl.name}</p>
+                        <p className="text-[10px] text-muted-foreground line-clamp-1">as {sl.character}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             )}
-          </div>
-        )}
-
-        {/* Rewatched */}
-        {rewatches.length > 0 && (
-          <div className="glass-card rounded-2xl p-6 space-y-3 animate-fade-in">
-            <h3 className="font-display text-lg font-semibold flex items-center gap-2">
-              <Tv size={18} className="text-primary" />
-              <span>⭐ Rewatched ({rewatches.length}) times</span>
-            </h3>
-            <div className="space-y-2">
-              {rewatches.map((r, i) => (
-                <div key={r.id} className="rounded-xl border border-border bg-card/60 p-3 space-y-1">
-                  <p className="text-[11px] font-semibold text-muted-foreground">
-                    Rewatch #{i + 1} · {new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </p>
-                  {r.emotions && (
-                    <p className="text-sm italic text-foreground whitespace-pre-wrap leading-relaxed">{r.emotions}</p>
-                  )}
-                </div>
-              ))}
-            </div>
           </div>
         )}
 

@@ -33,8 +33,10 @@ export type Database = {
           platform: string | null
           plot: string | null
           rating: number | null
+          release_year: number | null
           review: string | null
           rewatches: Json
+          second_lead_actor_id: number | null
           second_lead_syndrome: boolean | null
           status: string
           tags: Json | null
@@ -65,8 +67,10 @@ export type Database = {
           platform?: string | null
           plot?: string | null
           rating?: number | null
+          release_year?: number | null
           review?: string | null
           rewatches?: Json
+          second_lead_actor_id?: number | null
           second_lead_syndrome?: boolean | null
           status?: string
           tags?: Json | null
@@ -97,8 +101,10 @@ export type Database = {
           platform?: string | null
           plot?: string | null
           rating?: number | null
+          release_year?: number | null
           review?: string | null
           rewatches?: Json
+          second_lead_actor_id?: number | null
           second_lead_syndrome?: boolean | null
           status?: string
           tags?: Json | null

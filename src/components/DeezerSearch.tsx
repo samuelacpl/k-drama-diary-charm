@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback } from 'react';
-import { Search, X, Plus, Music, Play, Pause } from 'lucide-react';
+import { Search, X, Plus, Music } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MusicTrack } from '@/lib/types';
 import { toast } from 'sonner';
+import OstPlayButton from './OstPlayButton';
 
 interface Props {
   tracks: MusicTrack[];
@@ -15,8 +16,6 @@ export default function DeezerSearch({ tracks, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const [showInput, setShowInput] = useState(tracks.length === 0);
   const [loading, setLoading] = useState(false);
-  const [playingId, setPlayingId] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>();
 
   const search = useCallback((q: string) => {
@@ -43,21 +42,6 @@ export default function DeezerSearch({ tracks, onChange }: Props) {
       }
     }, 350);
   }, []);
-
-  const togglePreview = (t: MusicTrack) => {
-    if (!t.preview) return;
-    if (playingId === t.id) {
-      audioRef.current?.pause();
-      setPlayingId(null);
-      return;
-    }
-    audioRef.current?.pause();
-    const audio = new Audio(t.preview);
-    audioRef.current = audio;
-    audio.play().catch(() => {});
-    audio.onended = () => setPlayingId(null);
-    setPlayingId(t.id);
-  };
 
   const addTrack = (t: MusicTrack) => {
     if (tracks.some(x => x.id === t.id)) {
@@ -88,11 +72,7 @@ export default function DeezerSearch({ tracks, onChange }: Props) {
                 <p className="text-sm font-semibold text-foreground line-clamp-1">{t.name}</p>
                 <p className="text-xs text-muted-foreground line-clamp-1">{t.artist}</p>
               </div>
-              {t.preview && (
-                <button type="button" onClick={() => togglePreview(t)} className="p-1.5 rounded-full hover:bg-secondary text-foreground transition-colors">
-                  {playingId === t.id ? <Pause size={14} /> : <Play size={14} />}
-                </button>
-              )}
+              <OstPlayButton preview={t.preview} />
               <button type="button" onClick={() => remove(t.id)} className="p-1.5 rounded-full hover:bg-destructive/10 text-destructive transition-colors">
                 <X size={14} />
               </button>
