@@ -555,14 +555,45 @@ export default function DramaForm({ initial, onSubmit }: DramaFormProps) {
           <label className={labelClass}>🎵 Favorite OST Songs</label>
           <DeezerSearch tracks={osts} onChange={setOsts} />
         </div>
-        <div className="flex items-center gap-3">
-          <label className={labelClass}>Second Lead Syndrome?</label>
-          <button type="button" onClick={() => setSecondLeadSyndrome(!secondLeadSyndrome)}
-            className={`rounded-xl px-4 py-1.5 text-sm font-semibold transition-all ${
-              secondLeadSyndrome ? 'bg-rose/20 text-foreground border border-rose' : 'bg-card border border-border text-muted-foreground'
-            }`}>
-            {secondLeadSyndrome ? '😭 YES' : 'No'}
-          </button>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <label className={labelClass}>Second Lead Syndrome?</label>
+            <button type="button" onClick={() => {
+              const next = !secondLeadSyndrome;
+              setSecondLeadSyndrome(next);
+              if (!next) setSecondLeadActorId(undefined);
+            }}
+              className={`rounded-xl px-4 py-1.5 text-sm font-semibold transition-all ${
+                secondLeadSyndrome ? 'bg-rose/20 text-foreground border border-rose' : 'bg-card border border-border text-muted-foreground'
+              }`}>
+              {secondLeadSyndrome ? '😭 YES' : 'No'}
+            </button>
+          </div>
+          {secondLeadSyndrome && cast.length > 0 && (
+            <div className="space-y-2 animate-fade-in">
+              <p className="text-xs text-muted-foreground">Who stole your heart? 💔</p>
+              <div className="overflow-x-auto -mx-1 px-1 snap-x scroll-smooth">
+                <div className="flex gap-3 pb-1">
+                  {cast.map((a) => {
+                    const img = a.profilePath?.startsWith('http') ? a.profilePath : profileUrl(a.profilePath);
+                    const active = secondLeadActorId === a.id;
+                    return (
+                      <button key={a.id} type="button"
+                        onClick={() => setSecondLeadActorId(active ? undefined : a.id)}
+                        className={`shrink-0 snap-start text-center space-y-1 transition-transform ${active ? 'scale-105' : ''}`}
+                        style={{ width: 74 }}>
+                        <div className={`w-14 h-14 mx-auto rounded-full overflow-hidden border-2 bg-muted ${active ? 'border-rose ring-2 ring-rose/40' : 'border-border'}`}>
+                          {img ? <img src={img} alt={a.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-lg">🎭</div>}
+                        </div>
+                        <p className="text-[10px] font-semibold text-foreground line-clamp-1">{a.name}</p>
+                        <p className="text-[9px] text-muted-foreground line-clamp-1">{a.character}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
