@@ -6,7 +6,7 @@ import EmotionalBadges from "@/components/EmotionalBadges";
 import { Navbar } from "@/components/Navbar";
 import QuotesSlider from "@/components/QuotesSlider";
 import ActorCard from "@/components/ActorCard";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Drama, ActorInfo } from "@/lib/types";
 import { useDramas } from "@/hooks/useDramas";
 import { Music } from "lucide-react";
