@@ -282,7 +282,7 @@ export default function Wrapped() {
       bg: "from-primary/30 via-blush/40 to-lavender/40",
       content: (
         <div className="text-center space-y-3 px-6">
-          <Gift className="mx-auto text-primary animate-bounce-soft" size={32} />
+          <Gift className="mx-auto text-primary animate-pulse" size={32} />
           <p className="text-xs uppercase tracking-widest text-muted-foreground">✨ Recommended for you</p>
           {reco.poster_path && (
             <img src={posterUrl(reco.poster_path, "w342")} alt={reco.name}
