@@ -16,7 +16,7 @@ export default function OstPlayButton({ preview, size = 14 }: { preview?: string
     e.preventDefault();
     e.stopPropagation();
     if (!preview) {
-      toast.error("No preview available for this track");
+      toast.error("Anteprima non disponibile per questo brano");
       return;
     }
     if (playing && audioRef.current) {
@@ -25,14 +25,26 @@ export default function OstPlayButton({ preview, size = 14 }: { preview?: string
       setPlaying(false);
       return;
     }
+    // Stop any other audio currently playing on the page (avoid double-tracks)
+    document.querySelectorAll("audio").forEach((a) => {
+      try { (a as HTMLAudioElement).pause(); } catch {}
+    });
     const audio = new Audio(preview);
-    audio.crossOrigin = "anonymous";
+    // NOTE: no crossOrigin — Deezer CDN previews don't return CORS headers
+    // and setting it causes silent playback failures.
+    audio.preload = "auto";
     audioRef.current = audio;
     audio.onended = () => { setPlaying(false); audioRef.current = null; };
-    audio.onerror = () => { setPlaying(false); toast.error("Couldn't play preview"); };
-    audio.play().then(() => setPlaying(true)).catch(() => {
+    audio.onerror = () => {
       setPlaying(false);
-      toast.error("Playback blocked by browser");
+      audioRef.current = null;
+      toast.error("Anteprima non riproducibile");
+    };
+    audio.play().then(() => setPlaying(true)).catch((err) => {
+      setPlaying(false);
+      audioRef.current = null;
+      console.warn("[OstPlayButton] play failed", err);
+      toast.error("Riproduzione bloccata dal browser");
     });
   };
 
