@@ -1,11 +1,11 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Loader } from "@/components/Loader";
 import { useDramas } from "@/hooks/useDramas";
 import { Drama } from "@/lib/types";
-import { profileUrl } from "@/lib/tmdb";
-import { ChevronLeft, ChevronRight, Sparkles, Music, Heart, Tv, Camera, Star } from "lucide-react";
+import { profileUrl, posterUrl, discoverKoreanDramas, APP_GENRE_TO_TMDB, TmdbRecommendation } from "@/lib/tmdb";
+import { ChevronLeft, ChevronRight, Sparkles, Music, Heart, Tv, Camera, Star, Gift } from "lucide-react";
 
 interface Slide {
   key: string;
@@ -249,8 +249,63 @@ export default function Wrapped() {
 
   const slides = useMemo(() => buildSlides(monthDramas, currentMonth ?? monthKey(new Date())), [monthDramas, currentMonth]);
 
+  // Personalized recommendation (TMDB discover) appended to slides
+  const [reco, setReco] = useState<TmdbRecommendation | null>(null);
+  const [recoReason, setRecoReason] = useState<string>("");
+
+  useEffect(() => {
+    let cancelled = false;
+    if (monthDramas.length === 0) { setReco(null); return; }
+    // Find top genre from user's diary (all-time, not just this month, for stronger signal)
+    const tagCounts = new Map<string, number>();
+    dramas.forEach(d => (d.tags ?? []).forEach(t => tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1)));
+    const topTags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([t]) => t);
+    const tmdbGenres = topTags.flatMap(t => APP_GENRE_TO_TMDB[t] ?? []);
+    const seen = new Set(dramas.map(d => d.tmdbId).filter(Boolean));
+    discoverKoreanDramas(tmdbGenres).then(list => {
+      if (cancelled) return;
+      const pick = list.find(r => !seen.has(r.id)) ?? list[0];
+      if (!pick) return;
+      setReco(pick);
+      const reason = topTags.length
+        ? `Perché ami il genere ${topTags.join(" e ")} 💕`
+        : `Un k-drama amatissimo che potresti adorare ✨`;
+      setRecoReason(reason);
+    });
+    return () => { cancelled = true; };
+  }, [monthDramas, dramas]);
+
+  const allSlides = useMemo<Slide[]>(() => {
+    if (!reco) return slides;
+    const recoSlide: Slide = {
+      key: "reco",
+      bg: "from-primary/30 via-blush/40 to-lavender/40",
+      content: (
+        <div className="text-center space-y-3 px-6">
+          <Gift className="mx-auto text-primary animate-bounce-soft" size={32} />
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">✨ Recommended for you</p>
+          {reco.poster_path && (
+            <img src={posterUrl(reco.poster_path, "w342")} alt={reco.name}
+              className="w-32 mx-auto aspect-[2/3] rounded-2xl object-cover border border-border shadow-md" />
+          )}
+          <h3 className="font-display text-2xl font-semibold text-foreground">{reco.name}</h3>
+          {reco.first_air_date && (
+            <p className="text-[11px] text-muted-foreground">{reco.first_air_date.slice(0, 4)}</p>
+          )}
+          {reco.overview && (
+            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-5 italic px-2">
+              {reco.overview}
+            </p>
+          )}
+          <p className="text-[11px] text-primary font-semibold pt-1">{recoReason}</p>
+        </div>
+      ),
+    };
+    return [...slides, recoSlide];
+  }, [slides, reco, recoReason]);
+
   const goSlide = (delta: number) => {
-    setSlideIdx(i => Math.min(slides.length - 1, Math.max(0, i + delta)));
+    setSlideIdx(i => Math.min(allSlides.length - 1, Math.max(0, i + delta)));
   };
 
   // Swipe
@@ -272,7 +327,7 @@ export default function Wrapped() {
     );
   }
 
-  const slide = slides[slideIdx] ?? slides[0];
+  const slide = allSlides[slideIdx] ?? allSlides[0];
 
   return (
     <div className="min-h-screen">
@@ -313,7 +368,7 @@ export default function Wrapped() {
             </div>
 
             <div className="flex items-center justify-center gap-1.5">
-              {slides.map((s, i) => (
+              {allSlides.map((s, i) => (
                 <button
                   key={s.key}
                   onClick={() => setSlideIdx(i)}
@@ -329,7 +384,7 @@ export default function Wrapped() {
                 <ChevronLeft size={18} />
               </button>
               <p className="text-[11px] text-muted-foreground">swipe ←→ or use arrows</p>
-              <button onClick={() => goSlide(1)} disabled={slideIdx === slides.length - 1}
+              <button onClick={() => goSlide(1)} disabled={slideIdx === allSlides.length - 1}
                 className="p-3 rounded-full bg-primary text-primary-foreground disabled:opacity-30">
                 <ChevronRight size={18} />
               </button>
