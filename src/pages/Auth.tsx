@@ -29,7 +29,17 @@ export default function Auth() {
         toast.success('Check your email to confirm your account! 📧');
       }
     } catch (err: any) {
-      toast.error(err.message || 'Authentication failed');
+      console.error('[Auth] Sign-in error:', err);
+      const raw = err?.message || String(err);
+      const isFetchFail = /fetch failed|failed to fetch|networkerror/i.test(raw);
+      if (isFetchFail && window.self !== window.top) {
+        toast.error(
+          'Auth bloccato dalla preview di Lovable. Apri l\'app nell\'URL pubblicato o in una nuova tab del browser per loggarti.',
+          { duration: 8000 }
+        );
+      } else {
+        toast.error(raw || 'Authentication failed');
+      }
     } finally {
       setSubmitting(false);
     }
