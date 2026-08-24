@@ -4,26 +4,31 @@ import type { Database } from "./types";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-// Helper per gestire il localStorage in modo sicuro su Safari/iOS
+// Storage sicuro per Safari/iOS e per la preview in iframe (storage partizionato).
+// Se localStorage non è disponibile o è pieno, si usa una mappa in memoria:
+// così la sessione resta valida per tutta la durata della tab invece di sparire.
+const memoryStore = new Map<string, string>();
+
 const customStorage = {
   getItem: (key: string) => {
     try {
-      return localStorage.getItem(key);
+      const v = localStorage.getItem(key);
+      if (v !== null) return v;
     } catch {
-      return null;
+      // ignora: si usa la memoria
     }
+    return memoryStore.get(key) ?? null;
   },
   setItem: (key: string, value: string) => {
+    memoryStore.set(key, value);
     try {
       localStorage.setItem(key, value);
     } catch {
-      // Se il disco è pieno, Supabase userà la RAM
-      console.warn(
-        "Supabase Storage: LocalStorage pieno, sessione solo in RAM.",
-      );
+      console.warn("Auth storage: localStorage non disponibile, sessione in RAM.");
     }
   },
   removeItem: (key: string) => {
+    memoryStore.delete(key);
     try {
       localStorage.removeItem(key);
     } catch {
@@ -31,6 +36,7 @@ const customStorage = {
     }
   },
 };
+
 
 export const supabase = createClient<Database>(
   SUPABASE_URL,
