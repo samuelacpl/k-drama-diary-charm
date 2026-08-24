@@ -15,35 +15,65 @@ export default function Auth() {
   if (loading) return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;
   if (user) return <Navigate to="/" replace />;
 
+  const describeError = (err: any): string => {
+    const raw = err?.message || String(err);
+    const code = err?.code || err?.error_code;
+    const status = err?.status;
+
+    if (/fetch failed|failed to fetch|networkerror|load failed/i.test(raw)) {
+      if (window.self !== window.top) {
+        return "La preview blocca le richieste di login. Apri l'app in una nuova tab o sull'URL pubblicato.";
+      }
+      return "Impossibile contattare il server di autenticazione. Controlla la connessione e riprova.";
+    }
+    if (code === "invalid_credentials" || status === 400)
+      return "Email o password non corretti.";
+    if (code === "email_not_confirmed")
+      return "Email non confermata: controlla la casella e clicca sul link di conferma.";
+    if (code === "user_not_found") return "Nessun account trovato con questa email.";
+    if (code === "over_email_send_rate_limit" || status === 429)
+      return "Troppi tentativi. Attendi qualche minuto e riprova.";
+    if (code === "weak_password")
+      return "Password troppo debole: usa almeno 6 caratteri.";
+    if (code === "user_already_exists")
+      return "Esiste già un account con questa email. Prova ad accedere.";
+    if (status === 401 || /api key/i.test(raw))
+      return "Errore di configurazione del backend (chiave API non valida).";
+    return raw || "Autenticazione fallita";
+  };
+
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
         if (error) throw error;
         toast.success('Welcome back! 🌸');
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: { emailRedirectTo: window.location.origin },
+        });
         if (error) throw error;
         toast.success('Check your email to confirm your account! 📧');
       }
     } catch (err: any) {
-      console.error('[Auth] Sign-in error:', err);
-      const raw = err?.message || String(err);
-      const isFetchFail = /fetch failed|failed to fetch|networkerror/i.test(raw);
-      if (isFetchFail && window.self !== window.top) {
-        toast.error(
-          'Auth bloccato dalla preview di Lovable. Apri l\'app nell\'URL pubblicato o in una nuova tab del browser per loggarti.',
-          { duration: 8000 }
-        );
-      } else {
-        toast.error(raw || 'Authentication failed');
-      }
+      console.error('[Auth] error:', {
+        message: err?.message,
+        code: err?.code ?? err?.error_code,
+        status: err?.status,
+      });
+      toast.error(describeError(err), { duration: 7000 });
     } finally {
       setSubmitting(false);
     }
   };
+
 
   const handleGoogle = async () => {
     const result = await lovable.auth.signInWithOAuth('google', {
